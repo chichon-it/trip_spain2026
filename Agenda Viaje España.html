@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Viaje España</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            background: #fafafa; 
+            color: #1a1a1a; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            font-size: 16px; 
+            line-height: 1.6;
+            padding: 16px;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header { 
+            background: #fff; 
+            padding: 2rem; 
+            border-radius: 12px; 
+            margin-bottom: 2rem; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .header h1 { font-size: 28px; font-weight: 600; margin-bottom: 0.5rem; }
+        .header p { font-size: 14px; color: #666; }
+        .resumen { 
+            background: #fff; 
+            border-radius: 12px; 
+            padding: 1.5rem; 
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .resumen h2 { font-size: 16px; margin-bottom: 1rem; }
+        .resumen-stats { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); 
+            gap: 1rem;
+        }
+        .stat { 
+            background: #f5f5f5; 
+            padding: 1rem; 
+            border-radius: 8px; 
+            text-align: center;
+        }
+        .stat-label { font-size: 12px; color: #666; margin-bottom: 0.5rem; }
+        .stat-value { font-size: 18px; font-weight: 600; }
+        .day-card { 
+            background: #fff; 
+            border-radius: 12px; 
+            margin-bottom: 1rem; 
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .day-header { 
+            padding: 1rem 1.5rem; 
+            cursor: pointer; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            user-select: none;
+            background: #fafafa;
+            transition: background 0.2s;
+        }
+        .day-header:hover { background: #f0f0f0; }
+        .day-info { flex: 1; }
+        .day-title { font-weight: 600; font-size: 15px; }
+        .day-dates { font-size: 13px; color: #666; margin-top: 0.25rem; }
+        .day-progress { display: flex; align-items: center; gap: 1rem; }
+        .progress-bar { 
+            height: 4px; 
+            background: #e0e0e0; 
+            border-radius: 2px; 
+            width: 60px; 
+            overflow: hidden;
+        }
+        .progress-fill { 
+            height: 100%; 
+            background: #10b981; 
+            transition: width 0.3s;
+        }
+        .chevron { 
+            color: #999; 
+            font-size: 14px; 
+            transition: transform 0.2s;
+            width: 20px;
+            text-align: center;
+        }
+        .day-card.expanded .chevron { transform: rotate(180deg); }
+        .day-content { 
+            padding: 0 1.5rem 1.5rem; 
+            display: none;
+        }
+        .day-card.expanded .day-content { display: block; }
+        .category { margin-bottom: 1.5rem; }
+        .category-header { 
+            padding: 0.75rem 0; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between;
+            user-select: none;
+            border-bottom: 1px solid #e0e0e0;
+            transition: background 0.2s;
+        }
+        .category-header:hover { background: rgba(0,0,0,0.02); }
+        .category-title { display: flex; align-items: center; gap: 0.5rem; flex: 1; }
+        .category-icon { font-size: 16px; width: 20px; }
+        .category-name { font-weight: 500; font-size: 14px; }
+        .category-count { font-size: 12px; color: #999; }
+        .task-list { 
+            margin-top: 1rem; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 0.75rem;
+            display: none;
+        }
+        .category.expanded .task-list { display: flex; }
+        .task-item { 
+            display: flex; 
+            gap: 10px; 
+            padding: 0.75rem; 
+            background: #f9f9f9; 
+            border-radius: 8px;
+        }
+        input[type="checkbox"] { 
+            width: 20px; 
+            height: 20px; 
+            min-width: 20px; 
+            cursor: pointer; 
+            margin-top: 2px;
+        }
+        .task-content { flex: 1; }
+        input[type="text"] { 
+            width: 100%; 
+            border: none; 
+            background: transparent; 
+            font-size: 14px; 
+            font-weight: 500; 
+            padding: 0;
+            outline: none;
+            font-family: inherit;
+        }
+        input[type="text"].completed { 
+            text-decoration: line-through; 
+            color: #999;
+        }
+        textarea { 
+            width: 100%; 
+            padding: 0.5rem; 
+            font-size: 13px; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+            font-family: inherit; 
+            resize: vertical; 
+            min-height: 60px;
+            white-space: pre-wrap;
+            margin-top: 0.5rem;
+        }
+        textarea:focus { outline: none; border-color: #3b82f6; }
+        .task-actions { display: flex; gap: 6px; }
+        .btn-delete { 
+            width: 28px; 
+            height: 28px; 
+            border: 1px solid #ddd; 
+            background: transparent; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 12px;
+            transition: all 0.15s;
+        }
+        .btn-delete:hover { 
+            background: #f0f0f0; 
+            border-color: #999;
+        }
+        .add-btn { 
+            padding: 0.5rem 0.75rem; 
+            font-size: 13px; 
+            background: transparent; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+            cursor: pointer;
+            margin-top: 0.75rem;
+            transition: all 0.15s;
+        }
+        .add-btn:hover { 
+            background: #f5f5f5; 
+            border-color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Viaje España 2026</h1>
+            <p>Madrid → Andalucía → Madrid → Coruña → Madrid → Shanghai | 30 septiembre - 15 octubre</p>
+        </div>
+
+        <div class="resumen">
+            <h2>Resumen del viaje</h2>
+            <div class="resumen-stats">
+                <div class="stat">
+                    <div class="stat-label">Duración</div>
+                    <div class="stat-value" id="stat-days">12</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Total tareas</div>
+                    <div class="stat-value" id="stat-total">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Completadas</div>
+                    <div class="stat-value" id="stat-completed">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Progreso</div>
+                    <div class="stat-value" id="stat-progress">0%</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="days-container"></div>
+    </div>
+
+    <script>
+        const data = [
+            {
+                id: '1',
+                title: 'Día 1: Llegada a Madrid',
+                location: 'Madrid',
+                date: '30 de septiembre (miércoles)',
+                categories: [
+                    {
+                        id: 'transport-1',
+                        name: 'Transporte',
+                        icon: '✈️',
+                        tasks: [
+                            { id: '0', title: 'Traslado Casa a Aeropuerto', details: '🚕 TRASLADO SHANGHAI CASA → AEROPUERTO\n\n🎫 NÚMERO DE RESERVA:\n沪AED0351\n\n🚗 TIPO DE VEHÍCULO:\nGreyRising AutoR7LI SHI FU\nEconomy\n\n👥 PASAJEROS Y EQUIPAJE:\n✓ 4 passenger(s)\n✓ 2 piece(s) of baggage\n\n📍 DETALLES DEL VIAJE:\n✓ Juzi trip\n✓ Conditional cancellation\n✓ Free wait 30 minutes\n✓ Shanghai-air.drop-off\n\n⏰ HORARIO:\n📅 Sep 30\n⏰ 06:20 - Use the car\n\n✈️ VUELO RELACIONADO:\nCA8332\n\n📍 DIRECCIÓN SALIDA:\n333 Wuding Road\nChina, Shang Hai Shi, Jing An Qu\n武定路333号 邮政编码: 200041\n\n📍 DESTINO:\nShanghai Pudong International Airport T2', completed: false },
+                            { id: '1', title: 'Vuelo CA8332 Shanghai → Beijing', details: 'Airbus 321 | Economy class\n\nSalida: 09:20, miércoles 30 sep 2026\nDesde: Shanghai Pudong International Airport T2\n\nLlegada: 11:40, miércoles 30 sep 2026\nHasta: Beijing Capital International Airport T3\n\nTiempo de vuelo: 2h 10m\nEmbarque: 50 minutos antes de la salida', completed: false },
+                            { id: '2', title: 'Escala en Beijing', details: 'Tiempo de escala: 2h 50m\nTerminal: T3', completed: false },
+                            { id: '3', title: 'Vuelo CA897 Beijing → Madrid', details: 'Boeing 787 | Economy class\n\nSalida: 14:30, miércoles 30 sep 2026\nDesde: Beijing Capital International Airport T3\n\nLlegada: 20:30, miércoles 30 sep 2026\nHasta: Madrid Barajas Airport T1\n\nTiempo de vuelo: 12h\nEmbarque: 60 minutos antes de la salida', completed: false },
+                            { id: '4', title: 'Traslado aeropuerto → hotel + ALQUILER DE COCHE', details: '🚗 ALQUILER DE COCHE - MADRID AEROPUERTO\n\nVehículo: Hyundai i10 o similar (Pequeño ESMS)\nCategía: 4-5 plazas\n\n📍 RECOGIDA:\n📅 Fecha: 30/09/2026\n⏰ Hora: 21:30\n📌 Lugar: Madrid Aeropuerto T1/T4 (MAD)\nAv de la Hispanidad, s/n, 28042 - Madrid\n✓ Recogida en terminal\n\n📍 DEVOLUCIÓN:\n📅 Fecha: 03/10/2026\n⏰ Hora: 16:00\n📌 Lugar: Madrid - Atocha Estación\nPaseo de Santa María de la Cabeza, 15, Bajo-Derecha, 28045 - Madrid\n\n💰 TARIFA:\n✓ Alquiler (3 días): 42,40€\n✓ Servicio Oneway: incluido\n✓ Tasa aeroportuaria: 5,17€\n✓ TOTAL: ~47,57€\n\n👤 DATOS DEL CONDUCTOR:\nNombre: Juan Agustin Sosa Ardiles\nTeléfono: +34 683 24 81 40\nEmail: agustinsa@inditex.com\nPaís: ES\n\n☎️ CONTACTO EMPRESA:\n+34 871 055 312', completed: false }
+
+                        ]
+                    },
+                    {
+                        id: 'hotel-1',
+                        name: 'Alojamiento',
+                        icon: '🏨',
+                        tasks: [
+                            { id: '5', title: 'Check-in en hotel', details: 'Hotel confirmado\n\nHuésped: Juan Agustin Sosaaardiles\nNúmero confirmación: 46GGNRGJ\n\nDirección:\nAv. de Aragón, 402B\nSan Blas-Canillejas\n28022 Madrid, Spain\n\nTeléfono: +34 659 03 45 63\n\nReserva: 30.09 - 03.10.2026\nTipo habitación: Twin room\nPrecio: 84€/noche\nIncluye: Bed and breakfast', completed: false }
+                        ]
+                    },
+                    {
+                        id: 'activities-1',
+                        name: 'Actividades',
+                        icon: '🎭',
+                        tasks: [
+                            { id: '43', title: '✓ Dejar equipaje y descansar', details: 'Prioridad al llegar a las 20:30 aprox\n\n21:45 Deberíamos estar dejando el hotel para poder llegar a cenar en el centro', completed: false },
+                            { id: '44', title: '🍽️ Cena tranquila', details: 'Descansar después del viaje de 24h\n\nCenar en el Paseo de la Castellana o bien en el centro en Los Hijos de Lucio', completed: false },
+                            { id: '45', title: '⭐ Opcional: Paseo nocturno (45-60 min)', details: 'Si quedan ganas:\nGran Vía → Callao → Puerta del Sol\n\n💡 Primera toma de contacto con Madrid\nSol y Gran Vía tienen bastante ambiente nocturno\n\n⚠️ No intentar turismo completo esa noche', completed: false }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: '2',
+                title: 'Día 2: Madrid',
+                location: 'Madrid',
+                date: '1 de octubre (jueves)',
+                categories: [
+                    {
+                        id: 'activities-2',
+                        name: 'Actividades',
+                        icon: '🎭',
+                        tasks: [
+                            { id: '6', title: '09:00 - 09:45 | Desayuno', details: 'El hotel incluye el desayuno, e intentar finalizar para las 9:15, así nos movilizamos con el coche 30 min hasta el centro\n\nOPCIÓN 1 (Tradicional):\nChocolatería San Ginés (Si cerca de Sol)\n✓ Churros con chocolate - experiencia típica\n\nOPCIÓN 2 (Completo):\nLoca Obsesión Sol | Brunch Madrid\n✓ Desayuno/brunch más elaborado', completed: false },
+                            { id: '7', title: '09:45 - 10:10 | Puerta del Sol', details: 'Recorrido (20-25 min):\n✓ Kilómetro 0\n✓ Real Casa de Correos\n✓ Oso y el Madroño\n✓ Entorno de la plaza\n\n💡 Punto central desde el que nacen muchas calles históricas\nSol → Plaza Mayor: 6-8 min caminando', completed: false },
+                            { id: '8', title: '10:15 - 10:40 | Plaza Mayor', details: 'Recorrido rápido (25 min):\n✓ Entrar por puertas laterales\n✓ Recorrer la plaza\n✓ Salir hacia Arco de Cuchilleros\n\n💡 No dedicar demasiado tiempo\nPlaza Mayor → Mercado de San Miguel: 2 min', completed: false },
+                            { id: '9', title: '10:40 - 11:00 | Mercado de San Miguel', details: 'Visita rápida (20 min)\n✓ Recorrerlo brevemente\n✓ A esta hora no es ideal para comer\n\n💡 Mejor verlo y continuar\nMercado → Catedral: 8-10 min', completed: false },
+                            { id: '10', title: '11:10 - 11:35 | Catedral de la Almudena', details: 'Entrada y paseo interior (25 min)\n📍 Abierta 10:00-20:30\n\n💡 No incluir Museo + Cúpula en esta versión\nCatedral → Plaza de Oriente: 2-3 min (muy cerca)', completed: false },
+                            { id: '12', title: '11:35 - 12:00 | Plaza de Oriente + Exterior Palacio', details: 'Paseo tranquilo (25 min)\n✓ Palacio → Plaza de Oriente\n✓ Teatro Real\n✓ Jardines del entorno\n\nDespués: Visita Guiada Palacio Real', completed: false },
+                            { id: '11', title: '👑 12:15 - 13:45 | Palacio Real - Visita Guiada', details: '🎫 TICKETS RESERVADOS:\nVer tickets en la carpeta correspondiente del email donde es importante ver cuál es el punto de encuentro.\n\nMichelle Reference ID: 1961978948\nAgustin Reference ID: 447729638\n\n⏱️ Tiempo: 1h 30min\n\n🕐 Horario (octubre-marzo):\nLunes-sábado: 10:00-18:00 (último acceso 17:00)\n\n⚠️ IMPORTANTE:\n✓ Comprar entrada anticipada (aforo limitado)\n✓ Visita Guiada\n\n💡 TIP: Evitar acceso gratuito 16:00-18:00 del jueves\n(puede haber cola y perderíamos momento para Debod)\n\n🎫 Entradas oficiales Palacio Real', completed: false },
+                            { id: '13', title: '🍽️ 14:00 - 15:30 | Almuerzo', details: 'Quedamos en almorzar con Amparo\n\nOPCIÓN 1 (Tradicional cerca):\nCasa Ciriaco\n\nOPCIÓN 2 (Muy madrileña - Cocido):\nLA BOLA\n\nOPCIÓN 3 (Junto Palacio):\nCafé de Oriente Palacio Real\n\n💡 Evitar Mercado de San Miguel para comida completa', completed: false },
+                            { id: '14', title: '15:45 - 16:15 | Teatro Real → Ópera → Plaza de España', details: 'Recorrido a pie (30 min):\nDesde Palacio/Plaza Oriente\n\nPalacio → Plaza de España: 10-12 min\n\n✓ Recorrer Plaza de España tranquilamente (renovada)', completed: false },
+                            { id: '15', title: '16:15 - 17:30 | GRAN VÍA', details: 'Primer recorrido de Gran Vía (1h 15min):\nPlaza de España → Edificio España\n→ Callao → edificios históricos\n\n💡 No recorrer completamente (volveremos mañana)\n\n⭐ Pausa para café o descanso en hotel si está cerca', completed: false },
+                            { id: '16', title: '🌅 18:45 - 20:15 | TEMPLO DE DEBOD', details: '⏰ Horario perfecto para atardecer:\n📅 1 octubre: puesta sol ~19:57\n\n🕐 Cronología recomendada:\n18:45-19:15: Interior (reserva anticipada)\n19:15-19:40: Jardines/miradores\n19:40-20:10: Atardecer\n\n🎫 Abierto mar-dom 10:00-20:00\n✓ Comprar entrada anticipada (aforo limitado)\n\n💡 TIP: Si no hay entrada interior, igual vale la pena\nPrincipal atractivo: entorno y vistas atardecer\n\nPlaza España → Debod: 8-10 min', completed: false },
+                            { id: '17', title: '20:30 en adelante | Malasaña + Cena', details: 'Desde Debod:\n✓ ~15 minutos caminando a Malasaña\n\n📍 OPCIÓN (Tapas tradicionales):\nBodega de la Ardosa\n\n🚶 Callejear y disfrutar la zona\n\nRegreso al hotel', completed: false },
+                            { id: '18', title: '🚶 Distancia estimada del día', details: '9-11 km caminando\nDependiendo ubicación del hotel', completed: false }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: '3',
+                title: 'Día 3: Madrid',
+                location: 'Madrid',
+                date: '2 de octubre (viernes)',
+                categories: [
+                    {
+                        id: 'activities-3',
+                        name: 'Actividades',
+                        icon: '🎭',
+                        tasks: [
+                            { id: '46', title: '07:30 - 08:00 | ☕ Desayuno', details: '30 minutos, cerca del hotel o algo rápido', completed: false },
+                            { id: '47', title: '08:00 - 08:25 | 🪪 Policía Nacional - Valdeacederas', details: 'Renovación de certificados electrónicos DNIe\n(Operación pendiente del Día 1)\n\n⚠️ Prioritario: hacer antes de otros trámites', completed: false },
+                            { id: '48', title: '08:25 - 08:35 | Traslado a Plaza de Castilla', details: 'Taxi/Metro o caminando según punto exacto', completed: false },
+                            { id: '49', title: '08:35 - 09:05 | 🏦 Banco Santander - Plaza de Castilla', details: 'Visita a tu sucursal', completed: false },
+                            { id: '50', title: '09:05 - 09:40 | Visita a IE Tower - Cinco Torres', details: 'Intentar contactar a Romera para ver si es posible una visita guiada al IE TOWER', completed: false },
+                            { id: '51b', title: '10:00 - 12:00 | Recorrido Castellana de Norte a Sur', details: '🚗 RECORRIDO POR LA AVENIDA CASTELLANA\n\nRecorrido norte a sur incluyendo:\n✓ Nuevos Ministerios\n✓ Estadio Bernabéu\n✓ IE María de Molina\n✓ Paseo Castellana / Juan Bravo\n✓ Museo de Escultura al Aire Libre\n✓ Plaza Colón\n\n💡 Puedes hacer este recorrido:\n• A pie (parcialmente)\n• En coche (recomendado para verlo todo)\n• En Metro (conexiones disponibles)\n\n⏱️ Tiempo: 2 horas aproximadamente\n\n📍 Una de las avenidas más importantes de Madrid\nCon arquitectura moderna y espacios emblemáticos', completed: false },
+                            { id: '51', title: '12:00 - 12:15 | Museo del Prado - Visita Exterior', details: '⏱️ Tiempo: 15 minutos\n\n🕐 Horario: Lun-sab 10:00-20:00\n\n💡 VISITA EXTERIOR:\n✓ Vista exterior del edificio\n✓ Fachada principal\n✓ Entorno del museo\n\n📍 Ubicación:\nPaseo del Prado, Madrid\n\n🎫 Solo visita exterior - sin entrada al interior', completed: false },
+                            { id: '52', title: '12:15 - 12:30 | Iglesia de los Jerónimos', details: 'Prácticamente al lado del Prado\n✓ Visita exterior\n✓ Pequeña entrada si accesible', completed: false },
+                            { id: '53', title: '🌳 12:30 - 14:15 | PARQUE DEL RETIRO', details: '⏱️ Tiempo: 1h 45min\n\n🕐 Octubre: abierto 06:00-22:00\n\n📍 RECORRIDO RECOMENDADO:\nEntrar por zona Prado:\n✓ Estanque Grande\n✓ Monumento Alfonso XII\n✓ Palacio de Velázquez\n✓ Palacio de Cristal (ver exterior - cerrado por obras)\n✓ Fuente del Ángel Caído\n✓ Salida hacia Puerta de Alcalá\n\n⚠️ Palacio de Cristal: actualmente cerrado (obras)\nNo contar con entrar, pero exterior vale la pena\n\n💡 Esto permite hacer Retiro en ~1h 45min', completed: false },
+                            { id: '54', title: '🍽️ 14:30 - 16:00 | ALMUERZO', details: 'Zona: Barrio de las Letras\n\nOPCIÓN 1 (Recomendada):\nTaberna el Sur de Huertas\n✓ Ubicación perfecta y sencilla\n\nOPCIÓN 2 (Flexible):\nTerrazas zona Huertas/Plaza Santa Ana\n✓ Elegir sobre la marcha\n\n💡 No comer en Mercado San Miguel', completed: false },
+                            { id: '55', title: '16:00 - 17:00 | BARRIO DE LAS LETRAS', details: '⏱️ Tiempo: 1 hora (ritmo lento)\n\n📍 RUTA APROXIMADA:\nCalle Huertas → Plaza de Santa Ana\n→ Casa de Cervantes/entorno literario\n→ Callejuelas del barrio\n\n💡 CONCEPTO: pasear más que visitar monumentos\nZona muy bonita para disfrutar del ambiente', completed: false },
+                            { id: '56', title: '17:00 - 17:20 | CONGRESO DE LOS DIPUTADOS', details: 'Pasar por el exterior\n✓ Continuar hacia Neptuno/Cibeles', completed: false },
+                            { id: '57', title: '17:20 - 17:45 | PLAZA DE CIBELES', details: 'Exterior del Palacio + fuente (25 min)\n\nCibeles → Gran Vía: 7-10 min', completed: false },
+                            { id: '58', title: '🏙️ 18:00 - 19:30 | GRAN VÍA', details: '⏱️ Tiempo: 1h 30min\n\n📍 RECORRIDO:\nEdificio Metrópolis → Gran Vía\n→ Edificios históricos → Callao\n\n✓ Compras\n✓ Café o paseo tranquilo\n✓ Segunda parte del recorrido de ayer', completed: false },
+                            { id: '59', title: '19:30 - 20:15 | ⭐ OPCIONAL: Mirador Círculo Bellas Artes', details: '🕐 Puesta sol: 2 octubre ~19:55\n✓ Horario perfecto para atardecer\n\n👁️ Vista elevada del centro de Madrid\n\n🎫 ENTRADA AZOTEA:\nPara subir a la Azotea del Círculo de Bellas Artes hay que comprar entrada, pero no funciona como Palacio Real o Prado con una franja horaria concreta obligatoria.\n\n💰 Precio: 6 € (entrada normal válida de 16:00 a 21:00)\n🕐 Viernes: la azotea permanece abierta hasta las 02:00\n\n💡 NUESTRO PLAN:\nLlegar hacia 19:00–19:30, subir antes del atardecer y quedarse mientras se encienden las luces de Madrid. Me sigue pareciendo perfecto.\n\n📌 IMPORTANTE:\nLa entrada a la azotea no reserva mesa en el restaurante; son dos cosas independientes.\n\n🔗 https://www.circulobellasartes.com/azotea/\n\n💡 OPCIONAL:\nSi ya están cansados, eliminar sin problema\nNo afecta el itinerario', completed: false },
+                            { id: '60', title: '🍽️ 20:30 en adelante | CENA', details: 'Cena con José e Irene en PUEBLO GRILL STEAKHOUSE MADRID\n\n🎫 RESERVA:\n✓ Hora: 20:30\n✓ Número de reserva: 1694011320\n✓ Cualquier duda mirarla en TheFork\n\n🚶 Regreso al hotel', completed: false },
+                            { id: '61', title: '🚶 Distancia estimada del día', details: '10-12 km caminando\n\n💡 Repartidos durante todo el día\n✓ Bastante tiempo dentro del Prado y Retiro', completed: false }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: '4',
+                title: 'Día 4: Madrid - Córdoba (se toma AVE)',
+                location: 'Córdoba',
+                date: '3 de octubre (sábado)',
+                categories: [
+                    {
+                        id: 'activities-4-morning',
+                        name: 'Mañana - Madrid',
+                        icon: '🎨',
+                        tasks: [
+                            { id: '62', title: '08:30 - 09:15 | Desayuno + check-out', details: 'Desayuno en el hotel e intentar finalizar para las 9:15', completed: false },
+                            { id: '63', title: '09:30 - 10:30 | Lavapiés', details: 'Barrio histórico y bohemio de Madrid\n✓ Recorrido por las calles y plazas características', completed: false },
+                            { id: '64', title: '10:30 - 11:00 | Mercado de Antón Martín', details: 'Mercado histórico tradicional\n✓ Visita rápida', completed: false },
+                            { id: '65', title: '11:10 - 11:30 | Exterior del Reina Sofía', details: 'Vista exterior del museo\n✓ Fotografías', completed: false },
+                            { id: '66', title: '11:35 - 12:00 | CaixaForum + Jardín Vertical, exterior', details: 'Centro cultural con fachada característica\n✓ Famoso por su Jardín Vertical\n✓ Visita exterior', completed: false },
+                            { id: '67', title: '12:10 - 13:15 | Almuerzo temprano zona Atocha', details: 'Comer rápido y ligero\n\n⚠️ IMPORTANTE: El AVE sale a las 14:35\n💡 No hacer comida larga', completed: false },
+                            { id: '68', title: '13:15 - 13:45 | Movernos a la Estación de Atocha', details: 'Recoger equipaje del hotel\nTraslado a Atocha\n\n⚠️ RECORDAR: Devolver coche en Atocha antes del AVE\n\n✓ Llegar con tiempo para transporte de equipaje', completed: false }
+                        ]
+                    },
+                    {
+                        id: 'transport-4',
+                        name: 'Transporte',
+                        icon: '✈️',
+                        tasks: [
+                            { id: '69', title: '🚄 14:35 | AVE MADRID → CÓRDOBA', details: '🎫 INFORMACIÓN DEL BILLETE:\n\n📍 Trayecto: Madrid P. Atocha → Córdoba-J. ANG.\n🕐 Horario: 14:35 - 16:21\n🚂 Tren: AVE 02142 | ESTANDAR (Sin Restauración)\n🚗 Vagón: 12\n💺 Plazas: 4B / 4A (Agustin y Michelle)\n🔇 Zona: SILENCIO\n\n💰 Precio:\n✓ Billete Agustin: 30,80€\n✓ Billete Michelle: 30,80€\n✓ TOTAL: 61,60€\n\n📋 CONFIRMACIÓN RENFE:\n✓ Localizador: 37B8DR\n✓ Referencia: 23326283\n\n⚠️ IMPORTANTE:\n✓ Cierre acceso tren 2 min antes salida\n✓ Llegar con tiempo\n\n📄 Descargar: Billete PDF adjunto', completed: false }
+                        ]
+                    },
+                    {
+                        id: 'hotel-4',
+                        name: 'Alojamiento',
+                        icon: '🏨',
+                        tasks: [
+                            { id: '70', title: 'Check-in en hotel de Córdoba', details: '🏨 CORDOBA - EXE CIUDAD DE CÓRDOBA\n\n📋 CONFIRMACIÓN:\n✓ Booking No.: 1132549165961141\n✓ Booking Amount: CNY 1,044.71 (Prepagado)\n\n🕐 CHECK-IN / CHECK-OUT:\n✓ Check-in: 3 oct, 15:00-24:00\n✓ Check-out: 4 oct, 00:00-12:00\n\n🏠 HABITACIÓN:\n✓ Tipo: Double Room\n✓ Cantidad: 1 habitación\n✓ Huéspedes: Agustin, Michelle, Yeeszemichelevanessa\n\n📍 DIRECCIÓN:\nAv. de Cádiz, s/n, Sur\nCordoba, Andalusia\n14013, Spain\n\n☎️ TELÉFONO HOTEL:\n+34-957-013600\n\n💡 INFO IMPORTANTE:\n✓ Desayuno: NO INCLUIDO\n✓ Tarifa: Member hotel\n✓ Pago: Personal account (PREPAGADO)\n✓ Hotel no emite recibo directo\n\n📌 CANCELACIÓN:\n✓ Cancelación gratuita antes de 06:00 AM, 3 oct (GMT+8)\n✓ No-show: Se cobrará la primera noche (CNY 1,044.71)\n\n💡 Nota: Para modificaciones, contactar directamente con el hotel', completed: false }
+                        ]
+                    },
+                    {
+                        id: 'activities-4-evening',
+                        name: 'Tarde/Noche - Córdoba',
+                        icon: '🎭',
+                        tasks: [
+                            { id: '71', title: '17:30 - Llegada a Córdoba', details: 'Desde Estación de Autobuses (si llegas en coche):\n✓ Estación Central está en Córdoba\n\nTaxi hasta hotel: 10 min (recomendado)\nO a pie por Judería: 25-30 min\n\n✓ Check-in en hotel', completed: false },
+                            { id: '72', title: '18:30 - Primer paseo por Córdoba (1h 30m)', details: 'Recorrido a pie:\n• Hotel → Plaza de las Tendillas (8 min)\n• Plaza de las Tendillas → Calleja de las Flores (8 min)\n• Calleja de las Flores → Patio de los Naranjos (2 min)\n• Patio de los Naranjos → Puente Romano (3 min)\n• Puente Romano → Mirador del Guadalquivir (5 min)\n• Regreso por Puente Romano (5 min)\n\n⚠️ IMPORTANTE: No entres en Mezquita hoy\nMañana la disfrutarás con menos gente', completed: false },
+                            { id: '73', title: '20:00 - Dirígete al Tablao', details: '7 minutos andando desde Puente Romano', completed: false },
+                            { id: '74', title: '20:30 - Espectáculo Flamenco', details: '📍 Tablao Flamenco "La Maestría"\nCalle Velázquez Bosco, 10\nCórdoba 14003, Andalucía ES\n\n☎️ CONTACTO:\n✓ +34 677117847\n✓ flamencolamaestria@gmail.com\n✓ www.flamencolamaestria.com\n\n🎫 TICKET INFORMATION:\n✓ Ticket: TAB-T146680752\n✓ Reference: TAB-104160314\n✓ Status: PAID IN FULL ✅\n\n👥 PARTICIPANTES:\n✓ Agustin (Juan Agustin Sosa Ardiles) - DOB: 1975-12-18\n✓ Michelle Hui - DOB: 1977-12-17\n\n💰 PRECIO:\n✓ 2 Adultos × €36.00 = €72.00\n✓ TOTAL: €72.00\n\n🕐 START TIME: Sat, October 03 2026 - 8:30 PM\n\n⏰ Flamenco Show in 10th-century Arab Baths in Cordoba\n\n💡 TIP: Llega 20-30 min antes\nPide vino Montilla-Moriles o cerveza\nDisfruta del ambiente íntimo\n\n📌 CANCELLATION POLICY:\n✓ 100% fee if cancelled 1 day or less before\n✓ 0% fee if cancelled 1000+ days before', completed: false },
+                            { id: '75', title: '22:00 - Cena', details: 'Cena en Casa Mazal - Plaza Maimonides\n\n📍 DIRECCIÓN:\nCalle Tomás Conde, 3\n14004 Córdoba\n\n📋 NÚMERO DE RESERVA:\n1692929314\n\n💡 Para cualquier duda de la reserva, verificar en TheFork', completed: false }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: '5',
+                title: 'Día 5: Córdoba → Sevilla',
+                location: 'Sevilla',
+                date: '4 de octubre (domingo)',
+                categories: [
+                    {
+                        id: 'transport-5',
+                        name: 'Transporte',
+                        icon: '✈️',
+                        tasks: [
+                            { id: '70', title: '🚗 ALQUILER COCHE EN CÓRDOBA (4 octubre)', details: '🚙 VEHÍCULO:\nPeugeot 208 (EDMR) o similar\nPaquete Europcar Standard\nCategía: Económico\n\n📍 RECOGIDA:\n📅 Fecha: 04/10/2026\n⏰ Hora: 14:00\n📌 Lugar: Córdoba Estación Central\nDirección: ESTACION AUTOBUSES.PLZ 3 CULTURAS\nCP: 14011 - CORDOBA\n\n📍 DEVOLUCIÓN:\n🚗 CAR RETURN PARKING\nCalle Tartesos\n14011 - CORDOBA\n(Devolución: Más adelante en el viaje)\n\n💰 COSTE TOTAL: 159,12€\n\n📋 DATOS RESERVA:\n✓ Número reserva: 1207454452\n✓ Conductor: Juan Agustin Sosa Ardiles\n\n☎️ CONTACTO EUROPCAR:\n+34 911505000\n\n💡 NOTA: Recogida 14:00 (llegarás ~16:21, tiempo suficiente)\nUsarás este coche para Córdoba → Sevilla → Cádiz → Ronda → Málaga → Granada', completed: false },
+                            { id: '71', title: 'Conducir Córdoba → Sevilla (~140 km, ~1.5h)', details: 'Distancia: ~140 km\nTiempo estimado: 1,5 horas\nRuta: Por carreteras de Andalucía\n\n💡 Salida después de almuerzo/actividades en Córdoba', completed: false }
+                        ]
+                    },
+                    {
+                        id: 'hotel-5',
+                        name: 'Alojamiento',
+                        icon: '🏨',
+                        tasks: [
+                            { id: '17', title: 'Check-in en hotel de Sevilla', details: '🏨 SEVILLE - EXE ISLA CARTUJA\n\n📋 CONFIRMACIÓN:\n✓ Booking No.: 1132549166696633\n✓ Booking Amount: CNY 1,662.81 (Prepagado)\n\n🕐 CHECK-IN / CHECK-OUT:\n✓ Check-in: 4 oct After 15:00\n✓ Check-out: 6 oct Before 12:00\n\n🏠 HABITACIÓN:\n✓ Tipo: Double Or Twin Room\n✓ Cantidad: 1 habitación\n✓ Huéspedes: Agustin, Michelle, Yeeszemichelevanessa\n\n📍 DIRECCIÓN:\nCalle de Triana, Puerta G\nSeville, Andalusia\n41092, Spain\n\n☎️ TELÉFONO HOTEL:\n+34-954-081700\n\n💡 INFO IMPORTANTE:\n✓ Desayuno: NO INCLUIDO\n✓ Tarifa: Member hotel\n✓ Pago: Personal account (PREPAGADO)\n✓ Hotel no emite recibo directo\n\n📌 CANCELACIÓN:\n✓ Cancelación gratuita antes de 06:00 AM, 2 oct (GMT+8)\n✓ No-show: Se cobrará por la estancia completa (CNY 1,670.06)\n\n💡 Nota: Para modificaciones, contactar directamente con el hotel', completed: false }
+                        ]
+                    },
+                    {
+                        id: 'activities-5',
+                        name: 'Actividades Córdoba',
+                        icon: '🎭',
+                        tasks: [
+                            { id: '18', title: '08:00 - Desayuno/Brunch', details: 'OPCIÓN 1 (Favorita):\nSINGULAR - Brunch y Café | ⭐4.8 | 957 91 51 00\n✓ Muy buen café, tostadas, brunch de calidad\n✓ Abre a las 08:00 (perfecto para tu horario)\n\nOPCIÓN 2:\nArábiga Specialty Coffee | ⭐4.9 | 744 63 05 91\n✓ Excelente café de especialidad\n⚠️ Abre a las 10:00 los domingos', completed: false },
+                            { id: '19', title: '08:45 - Caminar hacia la Mezquita', details: '5 minutos a pie', completed: false },
+                            { id: '20', title: '09:00 - Mezquita-Catedral', details: '📍 Cabildo Catedral de Córdoba\nC/Cardenal Herrero nº 1, 14003 Córdoba, España\n\n☎️ SOPORTE:\n✓ ticket@mezquita-catedraldecordoba.es\n✓ Tel: 957 850 030\n\n🎫 TICKET INFORMATION:\n✓ Entrada: 04/10/2026 - 09:00\n✓ Tipo: Entrada General\n✓ Precio: 15,00€ (x2 personas)\n\n👥 ENTRADAS:\n✓ Entrada 1 - R: 107210376 | T: 317495448 - 1/2\n✓ Entrada 2 - R: 107210376 | T: 317495449 - 2/2\n\n⏱️ TIEMPO RECOMENDADO: 2 horas\n\n💡 IMPORTANTE:\n✓ No tengas prisa\nEs probablemente el monumento más impresionante de Andalucía\n✓ Audioguía interactiva incluida\n✓ Trae auriculares propios y batería suficiente\n\n📖 CONSEJO:\nSi llevas audioguía o explicación histórica,\nenriquecerá mucho la experiencia.\nNo hagas la visita demasiado rápido.\n\n✓ INCLUYE:\n- Ruta de las Iglesias Fernandinas\n- Centro de Información y Recepción\n- Aplicación de audioguía\n\n📍 ACCESO:\n🚌 Bus: "Puerta del Puente" Stop (Líneas 3 y 12)\n🚕 Taxi: "Mezquita-Catedral de Córdoba" Stop, C/Torrijos nº6\n\n📋 REGLAS DE VISITA:\n✓ Zona videovigilada\n✓ Prohibido fumar y vapear\n✓ Prohibido fotografía con trípode\n✓ Prohibido animales (salvo perros guía)\n✓ Silencio obligatorio\n✓ Prohibido beber y comer\n✓ Menores 7-14 años siempre acompañados\n✓ Prohibido mochilas voluminosas\n✓ Prohibido gorras o sombreros\n✓ Prohibido vestir de manera indecorosa\n\n⚠️ LUGAR SAGRADO:\nGuarda el debido respeto durante tu visita', completed: false },
+                            { id: '21', title: '11:00 - Judería', details: 'Recorrido a pie (1h - 1h 15min):\n• Calleja de las Flores\n• Zoco Municipal\n• Calles históricas\n• Patios\n• Exterior de la Sinagoga\n\n⚠️ Los domingos la Sinagoga está cerrada al público (solo exterior)\nAun así, merece la pena acercarse por la belleza del entorno.', completed: false },
+                            { id: '22', title: '12:30 - Alcázar de los Reyes Cristianos', details: '📍 JARDINES DEL ALCÁZAR DE LOS REYES CRISTIANOS\n\n🎫 TICKET INFORMATION:\n✓ Entrada: 04/10/2026\n✓ Horario: 08:15 a 14:15 h\n✓ Tipo: Entrada general\n✓ Precio: 6,71€ (x2 personas)\n\n👥 ENTRADAS:\n✓ Agustin - Localizador: 24974262/32300428/111559921 (QR: OL9HRT252401Q65GV)\n✓ Michelle - Localizador: 24974262/32300428/111559922 (QR: OL9HRT252403DQ4YN)\n\n⏱️ TIEMPO RECOMENDADO: 1h 30min\n\n📍 UBICACIÓN:\nRecinto: Alcázar de los Reyes Católicos\nCórdoba, Andalusia, Spain\n\n💡 NO TE PIERDAS:\n✓ Jardines\n✓ Albercas\n✓ Paseo de los Reyes\n✓ Salón de los Mosaicos\n✓ Torres y vistas de la ciudad\n\n✓ Los domingos abre hasta primeras horas de tarde\n✓ Tu horario encaja perfectamente\n\n⚠️ IMPORTANTE:\n✓ Es un lugar sagrado - guarda el debido respeto\n✓ Sigue las instrucciones del personal\n✓ Observa todas las normas de visita', completed: false },
+                            { id: '23', title: '14:00 - Almuerzo', details: 'OPCIÓN 1 (Favorita):\nBodegas Mezquita Céspedes | ⭐4.8 | 957 49 00 04\nRecomendaciones:\n• Salmorejo • Mazamorra • Flamenquín\n• Rabo de toro • Presa ibérica\n\nOPCIÓN 2:\nBodegas Mezquita Corregidor | ⭐4.8 | 957 96 03 23\n\nOPCIÓN 3:\nTaberna La Montillana | ⭐4.8 | 957 47 95 18\n(si no cenaste allí la noche anterior)', completed: false },
+                            { id: '24', title: '15:30 - Paseo relajado por el centro', details: 'Recorrido sin horarios (disfrutar del ambiente):\nAlcázar → Puerta de Almodóvar (8 min)\n→ Plaza del Potro (10 min)\n→ Plaza de la Corredera (5 min)\n→ Plaza de las Tendillas (8 min)\n→ Compras y paseo por el centro\n\n🛍️ Simplemente disfrutar de Córdoba', completed: false },
+                            { id: '25', title: '⭐ Si queda tiempo antes de salir hacia Sevilla', details: 'Opcional - Palacio de Viana:\n✓ Famoso por sus 12 patios\n✓ Diferente a la Mezquita y Alcázar\n✓ Requiere ~1,5 horas\n\nÚltima visita - Puente Romano:\nSi hay luz, vuelve una última vez al Puente Romano.\nEs el mejor lugar para despedirse de Córdoba.\n✓ Vistas magníficas hacia la Mezquita', completed: false },
+                            { id: '26', title: '🍽️ Platos que no deberías dejar de probar', details: 'Especialidades cordobesas:\n• Salmorejo cordobés\n• Flamenquín\n• Rabo de toro\n• Mazamorra\n• Berenjenas fritas con miel\n• Presa ibérica\n• Pastel cordobés (postre)\n• Vino Montilla-Moriles', completed: false },
+                            { id: '27', title: '💡 Consejos finales para Córdoba', details: '✓ No uses coche en el centro histórico - ¡camina!\nCáchas antiguas tienen calles estrechas y acceso restringido\n\n✓ Lleva calzado cómodo - recorrerás ~10-12 km a pie sin grandes desniveles\n\n✓ La Mezquita merece una visita pausada - no intentes verla rápido\n\n✓ En el tablao: llega 20-30 min antes para disfrutar del ambiente\n\n✓ Come en restaurantes de la Judería - mejor ambiente y relación calidad-precio\nEvita los más pegados a Plaza del Triunfo\n\n✓ Octubre: temperatura ideal para caminar\nLleva una chaqueta ligera para la noche', completed: false }
+                        ]
+                    },
+                    {
+                        id: 'activities-5-sevilla',
+                        name: 'Actividades Sevilla',
+                        icon: '🎭',
+                        tasks: [
+                            { id: '28', title: '20:00 aprox. — Llegada al Exe Isla Cartuja', details: 'Check-in en el hotel Exe Isla Cartuja\n\n💡 Calcula unos 30–40 minutos entre:\n✓ Aparcar\n✓ Check-in\n✓ Dejar equipaje\n✓ Prepararos', completed: false },
+                            { id: '29', title: '20:40–20:50 | Traslado a la zona Catedral', details: 'Taxi/Cabify/Uber desde el hotel hacia la zona de Catedral / Plaza del Triunfo\n\n⏱️ Tiempo estimado: unos 15 minutos, dependiendo del tráfico', completed: false },
+                            { id: '30', title: '21:05–21:35 | Primera toma de contacto con Sevilla', details: 'No intentarás visitar nada por dentro. Solo:\n\n📍 RECORRIDO EXTERIOR:\nPlaza del Triunfo\n→ Catedral exterior\n→ Giralda\n→ Archivo de Indias exterior\n→ Avenida de la Constitución\n→ Plaza Nueva\n\n💡 La idea es ver por primera vez la zona monumental ya iluminada,\npero sin gastar demasiada energía.\n\n✓ Duración: ~30 minutos', completed: false },
+                            { id: '31', title: '21:35–22:45 | Cena', details: 'Zona: Centro / Arenal (no Triana, la reservamos para el lunes)\n\n💡 LA FÓRMULA: TAPAS, sin una cena demasiado pesada\n\n📍 ZONAS PRÁCTICAS:\n\nOPCIÓN 1: Calle Mateos Gago / Santa Cruz\nOPCIÓN 2: Plaza Nueva y alrededores\nOPCIÓN 3: Arenal, cerca de la Catedral\n\n⏱️ Duración: ~1 hora 10 minutos', completed: false },
+                            { id: '32', title: '22:45–23:00 | Caminata hacia las Setas', details: 'Distancia desde la zona Catedral: ~15 minutos andando\n\n💡 Es un paseo tranquilo por las calles iluminadas', completed: false },
+                            { id: '33', title: '23:00–23:40 | Setas de Sevilla / Metropol Parasol', details: '🏗️ SETAS DE SEVILLA (Metropol Parasol)\n\n⏰ HORARIO:\nActualmente abierto hasta las 23:45\n✓ Encaja muy bien con vuestro horario de llegada\n\n💡 IMPORTANTE:\nEs probablemente la mejor actividad que podemos incorporar esa noche\nsin interferir con el lunes.\n\n👁️ EL MIRADOR:\nSi todavía tenéis energía, subiría al mirador.\nLas vistas nocturnas de Sevilla son magníficas.\n\n⏱️ Duración: ~40 minutos', completed: false },
+                            { id: '34', title: '23:40–23:50 | Taxi de regreso al hotel', details: 'Traslado desde Setas hasta Exe Isla Cartuja\n\n⏱️ Tiempo estimado: ~15 minutos', completed: false },
+                            { id: '35', title: '00:05 aprox. | Llegada al hotel', details: 'Descanso después de una noche intensa de viaje y primer contacto con Sevilla', completed: false },
+                            { id: '36', title: '💡 Si llegáis cansados', details: 'ELIMINARÍA: Setas de Sevilla\nNO ELIMINARÍA: Paseo nocturno inicial\n\n📌 RAZONAMIENTO:\n✓ Las Setas son interesantes, pero todo lo importante lo veremos el lunes\n✓ El paseo nocturno por la Catedral es esencial para la primera impresión de Sevilla\n✓ Si estáis muy cansados, regresad directamente desde Plaza Nueva', completed: false }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: '6',
+                title: 'Día 6: Sevilla',
+                location: 'Sevilla',
+                date: '5 de octubre (lunes)',
+                categories: [
+                    {
+                        id: 'activities-6',
+                        name: 'Actividades',
+                        icon: '🎭',
+                        tasks: [
+                            { id: '37', title: '07:30–08:15 | Desayuno', details: 'Desayuno en el hotel\n\n💡 No intentarías salir demasiado tarde porque quiero que estéis en la zona monumental antes de las 09:30', completed: false },
+                            { id: '38', title: '08:40 | Salida del hotel', details: 'Taxi/Cabify/Uber hasta Puerta de Jerez / Plaza del Triunfo\n\n⏱️ Calcula aproximadamente 15–20 minutos', completed: false },
+                            { id: '39', title: '09:00–09:20 | Plaza del Triunfo y exterior del Archivo de Indias', details: 'Pequeña introducción mientras esperáis el eventual horario del Alcázar\n\n📍 VER:\n✓ Catedral exterior\n✓ Giralda\n✓ Archivo de Indias\n✓ Plaza del Triunfo\n\n💡 Todo está prácticamente junto', completed: false },
+                            { id: '40', title: '09:30–11:30 | REAL ALCÁZAR DE SEVILLA (pendiente de tickets)', details: '🏰 REAL ALCÁZAR DE SEVILLA\n\n⏰ HORARIO OFICIAL EN OCTUBRE: 09:30–17:00\n\n💡 DISPONIBILIDAD DE ENTRADAS:\n✓ Si conseguís entrada a las 09:30 → perfecto\n✓ Si conseguís 10:00 → también funciona\n✓ Hasta 10:15/10:30 → todavía podemos acomodarlo\n\n⏱️ TIEMPO DISPONIBLE: 2 horas bloqueadas\n\n🏛️ QUÉ PRIORIZAR (con 2 horas):\n✓ Palacio de Pedro I\n✓ Patio de las Doncellas\n✓ Salón de Embajadores\n✓ Patio de las Muñecas\n✓ Palacio Gótico\n✓ Jardines principales\n\n⚠️ NO AÑADIR: Cuarto Real Alto (con poco tiempo disponible)', completed: false },
+                            { id: '41', title: '11:30–12:30 | Barrio de Santa Cruz', details: 'El Alcázar desemboca prácticamente en Santa Cruz, de modo que no perdemos tiempo\n\n📍 RUTA APROXIMADA:\nPatio de Banderas → Calle Judería → Callejón del Agua → Plaza de Doña Elvira → Plaza de Santa Cruz → Calle Mateos Gago\n\n⏱️ Tiempo: aproximadamente 1 hora\n\n💡 No requiere entradas\n✓ Ir despacio porque buena parte del encanto es simplemente perderse un poco entre calles estrechas, patios y casas blancas', completed: false },
+                            { id: '42', title: '12:30–12:55 | Tentempié ligero', details: 'No hagas el almuerzo principal antes de la Catedral\n\n✓ Toma algo ligero:\n  - Café\n  - Refresco\n  - Montadito\n  - Tapa pequeña\n\n💡 RAZÓN: A las 13:05 tenéis que estar en el acceso de la Catedral', completed: false },
+                            { id: '43', title: '13:05 | Llegada a la Catedral', details: 'La Catedral recomienda llegar aproximadamente 10 minutos antes\n\n💡 La visita empieza por la Giralda y el control de acceso es independiente', completed: false },
+                            { id: '44', title: '13:15–14:30 | CATEDRAL + GIRALDA (incluye Iglesia El Salvador)', details: '🏛️ CATEDRAL + GIRALDA + IGLESIA EL SALVADOR\n\n🎫 INFORMACIÓN DE LA ENTRADA:\n✓ Fecha de visita: 05/10/2026\n✓ Hora: 13:10\n✓ Persona: Juan Agustin Sosa Ardiles (50778056J)\n✓ x2 Individual adultos\n✓ Total: 26,00€\n✓ Loc. compra: 268JOLM8DW\n✓ Loc. reserva: 2NEK1IUS\n✓ Michelle Hui (HJ2467172)\n\n⏱️ DURACIÓN ESTIMADA: 75 minutos\n\n📍 PRIORIDADES DENTRO:\n✓ Giralda (comienza aquí - horario indicado en entrada)\n✓ Tumba de Cristóbal Colón\n✓ Retablo Mayor\n✓ Coro\n✓ Capilla Mayor\n✓ Patio de los Naranjos\n\n💡 LA GIRALDA:\n✓ Se sube principalmente mediante rampas, no mediante escalera convencional\n\n⚠️ IMPORTANTE:\n✓ No se permitirá el acceso fuera de la fecha y hora indicadas\n✓ Con pago reducido o entrada gratuita, mostrar documento oficial acreditativo\n✓ Reingreso NO autorizado\n✓ Horarios previos al cierre → darse prisa porque tienen poco tiempo\n\n🌐 Más info: www.catedraldesevilla.es\n☎️ 954 214 971\n\n🗂️ IGLESIA EL SALVADOR:\n✓ Incluida en la entrada de Catedral + Giralda\n✓ Complementa la visita a la Catedral\n✓ Ver opciones de cuándo visitarla abajo', completed: false },
+                            { id: '45', title: '14:30–15:45 | Almuerzo', details: 'Ahora sí haría una comida tranquila\n\n📍 ZONA IDEAL: Santa Cruz / Puerta de Jerez\n(nuestro siguiente destino estará al sur)\n\n💡 TIPO DE COMIDA:\n✓ No reservaría algo excesivamente formal\n✓ Queremos salir aproximadamente a las 15:45\n✓ Tapas tradicionales\n✓ Cocina andaluza\n✓ Restaurante informal', completed: false },
+                            { id: '46', title: '15:45–16:05 | Caminata a Plaza de España', details: 'Desde Puerta de Jerez son unos 15–20 minutos andando', completed: false },
+                            { id: '47', title: '16:05–17:00 | PLAZA DE ESPAÑA', details: '🏛️ PLAZA DE ESPAÑA\n\n⏱️ DURACIÓN: 55 minutos (uno de los sitios que más tiempo merece para fotos)\n\n📍 RECORRIDO:\n✓ Edificio semicircular\n✓ Canal\n✓ Puentes\n✓ Bancos provinciales de azulejos\n✓ Plaza central\n\n✓ Acceso libre', completed: false },
+                            { id: '48', title: '17:00–17:30 | Parque de María Luisa', details: 'No intentarías recorrerlo entero\n\n💡 Haría únicamente un paseo agradable desde Plaza de España por la zona más cercana\n\n⏱️ Tiempo aproximado: 30 minutos', completed: false },
+                            { id: '49', title: '17:30–17:50 | Caminata hacia Torre del Oro', details: 'Desde el parque hasta el Guadalquivir', completed: false },
+                            { id: '50', title: '17:50–18:10 | Torre del Oro', details: '🏰 TORRE DEL ORO\n\n💡 NO ENTRARÍAS\n\n⏱️ Con un día disponible, es suficiente verla desde fuera y sacar fotos\n✓ La Torre actualmente figura abierta hasta las 19:00\n✓ Prefiero utilizar ese tiempo en el río y Triana', completed: false },
+                            { id: '51', title: '18:10–18:50 | Paseo por el Guadalquivir', details: 'Desde Torre del Oro caminarías lentamente hacia:\n\n📍 RECORRIDO:\nPaseo de Cristóbal Colón → Plaza de Toros exterior → Puente de Isabel II\n\n⏱️ Tiempo: 30–40 minutos, incluyendo fotografías\n\n💡 Aquí empieza una de las partes más agradables del día', completed: false },
+                            { id: '52', title: '18:50–19:15 | Puente de Triana y entrada a Triana', details: 'Cruzar el Puente de Isabel II\n\n📍 PRIMERA PARADA:\nPlaza del Altozano\n\n💡 El Mercado de Triana normalmente cierra su zona comercial sobre las 15:00 los lunes,\npor lo que a esta hora no lo programaría como visita interior', completed: false },
+                            { id: '53', title: '19:15–20:20 | Triana + puesta de sol', details: '🌅 PUESTA DE SOL EN SEVILLA\n\n⏰ INFORMACIÓN:\n✓ 5 de octubre de 2026: puesta de sol ~20:01\n✓ Entre 19:30 y 20:15 → excelente luz para fotografías\n\n📍 RECORRIDO:\nAltozano → Calle Betis → paseo por la ribera → pequeñas calles interiores de Triana\n\n💡 MEJOR VISTA:\nDesde Calle Betis tendrás las mejores vistas hacia la otra orilla con Sevilla iluminándose\n\n⏱️ Duración: ~1 hora', completed: false },
+                            { id: '54', title: '20:20–21:45 | Cena en Triana', details: 'Esta noche sí elegiría Triana para cenar\n\n🍽️ IDEAL PARA:\n✓ Tapas\n✓ Pescaíto\n✓ Salmorejo\n✓ Espinacas con garbanzos\n✓ Carrillada\n✓ Montaditos\n\n💡 NO convertirlo en una cena formal - Triana funciona mejor como ambiente de tapas', completed: false },
+                            { id: '55', title: '21:45–22:15 | Paseo nocturno', details: 'Después de cenar:\n\n📍 RECORRIDO:\nTriana → Puente de Isabel II → Arenal\n\n💡 Si tenéis todavía energía, continuaría hacia Catedral para verla nuevamente iluminada', completed: false },
+                            { id: '56', title: '22:15–22:30 | Taxi al hotel', details: 'Desde Arenal / Catedral hasta Exe Isla Cartuja\n\n⏰ Llegada al hotel: 22:45 aprox', completed: false },
+                            { id: '57', title: '💡 IGLESIA DEL SALVADOR - CUÁNDO LA VEMOS', details: '⚠️ DETALLE IMPORTANTE:\n\nTu entrada a Catedral + Giralda incluye gratuitamente la Iglesia del Salvador\n\n💡 PERO con nuestra ruta actual no forzaría la visita el lunes si eso implica sacrificar Alcázar, Plaza de España o el atardecer en Triana\n\n🔄 TRES OPCIONES:\n\nOPCIÓN A: Si termináis Catedral antes de las 14:30 y vais bien de energía\n→ Pasar por El Salvador antes de almorzar\n\nOPCIÓN B: Si el Alcázar finalmente no sale\n→ Incorporarla cómodamente por la mañana\n\nOPCIÓN C: Dejarla fuera aun teniendo incluida la entrada\n→ No considero que debamos visitar algo solamente porque esté incluido', completed: false },
+                            { id: '58', title: '🍽️ Recomendaciones para comer/cenar', details: 'Tengo listado de recomendaciones en TheFork\n\n🌟 RECOMENDACIONES DE LA HERMANA DE AMPARO:\n\n✓ Sol y Sombra\n✓ Río Grande (en la calle Betis)\n✓ Bar Casablanca\n✓ Bar Las Teresas', completed: false }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: '7',
+                title: 'Día 7: Sevilla → Cádiz',
+                location: 'Cádiz',
+                date: '6 de octubre (martes)',
+                categories: [
+                    {
+                        id: 'transport-7',
+                        name: 'Transporte',
+                        icon: '✈️',
+                        tasks: [
+                            { id: '22', title: 'Conducir Sevilla → Cádiz (~130 km, ~1.5h)', details: '', completed: false }
+                        ]
+                    },
+                    {
+                        id: 'hotel-7',
+                        name: 'Alojamiento',
+                        icon: '🏨',
+                        tasks: [
+                            { id: '23', title: 'Check-in en hotel BYPILLOW Casa Gades (by BOOKING.com)', details: '🏨 CÁDIZ - BYPILLOW CASA GADES\n\n📋 CONFIRMACIÓN:\n✓ Número de confirmación: 12661823667945230445\n✓ Código PIN: 219651\n✓ Número de check-in: 20031298\n✓ Email confirmación enviado a: juanagustinsosa@hotmail.com\n\n🕐 FECHAS DE ESTANCIA:\n✓ Entrada: martes, 6 de octubre de 2026\n✓ Salida: miércoles, 7 de octubre de 2026\n✓ Duración: 1 noche, 1 habitación\n\n🏠 HABITACIÓN:\n✓ Tipo: Habitación Doble Económica\n✓ Para: 2 huéspedes\n✓ Cliente: Juan Agustin Sosa Ardiles\n\n📍 DIRECCIÓN:\n7 Calle Rosario\n11005 Cádiz, España\n\n☎️ TELÉFONO HOTEL:\nBYPILLOW Casa Gades\n+34 609202368\n\n💰 PRECIO:\n✓ Total: $148.357,70\n✓ CNY: 653,70\n✓ PAGADO\n\n📌 CANCELACIÓN:\n✓ Cargo de cancelación a partir de las 14:05 del 27 de septiembre de 2026\n✓ Los plazos se indican en hora local del alojamiento (CEST)\n\n⚠️ IMPORTANTE EN EL CHECK-IN:\n✓ Presentar documento de identidad con foto\n✓ El nombre del cliente debe coincidir con el del documento\n✓ El número de check-in es: 20031298\n\n💡 NOTAS:\n✓ Tu reserva es con TripGenius Limited\n✓ No es posible cambiar tus datos personales ni los de la reserva\n✓ Puedes solicitar cambios directamente al alojamiento\n✓ Para cualquier otra duda, usar el número de confirmación y código PIN', completed: false }
+                        ]
+                    },
+                    {
+                        id: 'activities-7',
+                        name: 'Actividades',
+                        icon: '🎭',
+                        tasks: [
+                            { id: '24', title: '📍 Contexto del día', details: 'Llegan sobre las 9:30 y duermen en Cádiz\n\n💡 EL RECORRIDO:\n✓ Permite visitar el casco histórico a pie\n✓ Combina monumentos con tiempo para comer tranquilos\n✓ Termina junto al mar\n✓ Suma aproximadamente 7–9 km (según desvíos por plazas y calles)\n\n🚗 RECOMENDACIÓN:\n✓ La ruta funciona mejor sin coche\n✓ Si llegan en coche: dejen equipaje y aparquen antes de empezar\n✓ Centro histórico con calles estrechas\n✓ Estacionamiento difícil', completed: false },
+                            { id: '25', title: '09:30–10:00 | Llegada y dejar equipaje', details: 'Llegada a Cádiz ~09:30\n\n💡 SI EL ALOJAMIENTO AÚN NO ESTÁ DISPONIBLE:\n✓ Consulten si pueden guardar las maletas\n✓ Esto permitirá empezar el recorrido sin equipaje', completed: false },
+                            { id: '26', title: '10:00–11:00 | Plaza de San Juan de Dios, Ayuntamiento y barrio del Pópulo', details: 'Paseo por el barrio del Pópulo\n\n📍 INCLUYE:\n✓ Plaza de San Juan de Dios\n✓ Ayuntamiento\n✓ Arcos medievales del Pópulo\n✓ Uno de los sectores más antiguos de Cádiz\n\n⏱️ Duración: 1 hora', completed: false },
+                            { id: '27', title: '11:00–11:30 | Teatro Romano y centro de interpretación', details: 'Teatro Romano de Cádiz\n\n💡 IMPORTANTE:\n✓ El acceso puede variar\n✓ Conviene comprobarlo esa semana\n✓ Verificar si está abierto el 6 de octubre\n\n⏱️ Duración: 30 minutos', completed: false },
+                            { id: '28', title: '11:30–12:45 | Catedral de Cádiz y plaza de la Catedral', details: '🏛️ CATEDRAL DE CÁDIZ\n\n📍 INCLUYE:\n✓ Visita cultural de la Catedral\n✓ Plaza de la Catedral\n✓ Espacios del conjunto catedralicio\n\n⏰ HORARIO PUBLICADO:\n✓ Lunes a sábado: desde las 10:00\n✓ Verificar horarios cercanos a la fecha\n\n💡 RECOMENDACIÓN:\n✓ Reservar o comprobar disponibilidad antes\n\n⏱️ Duración: 1 hora 15 minutos', completed: false },
+                            { id: '29', title: '12:45–13:15 | Campo del Sur y zona del mercado', details: 'Caminen por Campo del Sur hacia la zona del mercado\n\n💡 BUEN PUNTO PARA:\n✓ Ver la fachada de la ciudad junto al mar\n✓ Hacer fotos\n✓ Primer contacto con la costa\n\n⏱️ Duración: 30 minutos', completed: false },
+                            { id: '30', title: '13:15–14:15 | Almuerzo en Mercado Central o alrededores', details: 'OPCIONES DE ALMUERZO:\n\n✓ Mercado Central / Rincón Gastronómico\n✓ Bares alrededor del mercado\n\n💡 AL SER MARTES:\n✓ El mercado debería ser una opción cómoda para comer informalmente\n✓ Revisar horarios y puestos al llegar\n\n🍽️ COMIDA TRANQUILA - No alargar demasiado\n\n⏱️ Duración: 1 hora', completed: false },
+                            { id: '31', title: '14:15–15:00 | Plaza de las Flores, Plaza de la Candelaria y centro', details: 'Paseo por el centro histórico\n\n📍 INCLUYE:\n✓ Plaza de las Flores\n✓ Plaza de la Candelaria\n✓ Calles del centro\n\n💡 OPORTUNIDAD:\n✓ Parar a tomar café\n✓ Probar un dulce local\n\n⏱️ Duración: 45 minutos', completed: false },
+                            { id: '32', title: '15:00–15:50 | Parque Genovés y Alameda junto al mar', details: 'Paseo costero\n\n📍 INCLUYE:\n✓ Parque Genovés\n✓ Paseo por la Alameda\n✓ Vistas al mar\n\n⏱️ Duración: 50 minutos', completed: false },
+                            { id: '33', title: '16:00–16:45 | Torre Tavira y Cámara Oscura', details: '🏰 TORRE TAVIRA - CÁMARA OSCURA\n\n🎫 RESERVA CONFIRMADA:\n✓ Booking #43312 Unpaid\n✓ Día de la visita: 10/06/2026\n✓ Hora de llegada: 16:00\n✓ Sesión de Cámara Oscura en inglés\n✓ 2 Personas\n✓ Cantidad: 2\n✓ Precio: 16,00€ (por persona)\n✓ Total: 16,00€\n\n⏰ PAGO:\n✓ Pago en recepción en el momento de la visita\n✓ Rates sujetos a confirmación\n\n💡 INFORMACIÓN:\n✓ Horario octubre: 10:00 a 18:00\n✓ Duración de la visita: ~45 minutos\n✓ La visita en inglés está disponible a las 16:00\n\n⏱️ Duración: 45 minutos', completed: false },
+                            { id: '34', title: '16:45–18:00 | Castillo de Santa Catalina y La Caleta', details: 'Zona costera emblemática\n\n📍 INCLUYE:\n✓ Castillo de Santa Catalina (visita breve)\n✓ Playa de La Caleta\n✓ Paseo por la costa\n\n💡 LA CALETA:\n✓ Uno de los rincones más emblemáticos de la ciudad\n✓ Vistas magníficas\n\n⏱️ Duración: 1 hora 15 minutos', completed: false },
+                            { id: '35', title: '18:00–20:00 | Tiempo libre en La Caleta y barrio de La Viña', details: 'PUESTA DE SOL EN CÁDIZ\n\n🌅 INFORMACIÓN:\n✓ Puesta de sol alrededor de las 20:00 ese día (6 octubre)\n\n💡 OPCIONES:\n✓ Quedarse en la playa\n✓ Caminar por el paseo marítimo\n✓ Disfrutar de La Viña\n✓ Tomar algo en alguna terraza\n\n⏱️ Duración: 2 horas', completed: false },
+                            { id: '36', title: '20:15 en adelante | Cena de tapas o pescado', details: 'CENA EN CÁDIZ\n\n📍 OPCIONES:\n✓ La Viña\n✓ Centro histórico\n\n🍽️ TIPO DE COMIDA:\n✓ Tapas\n✓ Pescado fresco\n\n💡 IMPORTANTE:\n✓ Como parten temprano a Ronda (Día 8)\n✓ Mejor cenar sin alargar demasiado\n✓ Dejar preparado el equipaje\n\n⏱️ Tiempo flexible', completed: false },
+                            { id: '37', title: '⭐ Prioridades si el horario se complica', details: 'VISITAS PRINCIPALES (OBLIGATORIAS):\n✓ Pópulo (barrio medieval)\n✓ Catedral\n✓ Torre Tavira\n✓ La Caleta (playa emblemática)\n\n📍 VISITAS SECUNDARIAS (pueden reducirse):\n✓ Teatro Romano\n✓ Parque Genovés\n✓ Plazas (se pueden disfrutar en paseos exteriores sin dedicarles demasiado tiempo)\n\n❌ NO INCLUIR:\n✓ Castillo de San Sebastián como visita interior\n✓ Situación incierta: traspaso de gestión al Ayuntamiento\n✓ No queda claro si estará abierto el 6 de octubre\n✓ ALTERNATIVA: paseo exterior / calzada si quieren caminar más por la costa', completed: false },
+                            { id: '38', title: '💡 Consejos prácticos para Cádiz', details: '🚗 TRANSPORTE:\n✓ La ruta funciona mejor sin coche - recorrer caminando\n✓ Si llegan en coche:\n  - Dejar equipaje\n  - Aparcar antes de empezar\n  - Centro histórico con calles estrechas\n  - Estacionamiento difícil\n\n🗺️ RESERVAS:\n✓ Reserven la Torre Tavira con anticipación\n✓ Comprueben horarios de la Catedral\n✓ Verifiquen horario del Teatro Romano cerca de la fecha\n\n🏛️ INFORMACIÓN FUENTE:\n✓ Rutas recomendadas por Turismo de Cádiz\n✓ Guía oficial de España\n\n⏱️ DISTANCIA TOTAL: ~7-9 km', completed: false }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: '8',
+                title: 'Día 8: Cádiz → Ronda',
+                location: 'Ronda',
+                date: '7 de octubre (miércoles)',
+                categories: [
+                    {
+                        id: 'transport-8',
+                        name: 'Transporte',
+                        icon: '✈️',
+                        tasks: [
+                            { id: '26', title: 'Conducir Cádiz → Ronda (~190 km, ~2.5h)', details: '', completed: false }
+                        ]
+                    },
+                    {
+                        id: 'hotel-8',
+                        name: 'Alojamiento',
+                        icon: '🏨',
+                        tasks: [
+                            { id: '27', title: 'Check-in en Apartamentos a&c suite (by BOOKING.com)', details: '🏨 RONDA - APARTAMENTOS A&C SUITE\n\n☎️ CONTACTO CON ANFITRIÓN:\n✓ Ponte en contacto para saber dónde recoger las llaves\n✓ Pregunta por el horario de check-in\n✓ Teléfono: +34637786105\n✓ También puedes enviarle email a través de Booking.com\n\n🕐 FECHAS DE ESTANCIA:\n✓ Entrada: miércoles, 7 de octubre de 2026 (13:00 - 21:00)\n✓ Salida: jueves, 8 de octubre de 2026 (08:00 - 11:00)\n✓ Duración: 1 noche\n✓ Tipo: Apartamento de 1 dormitorio\n✓ Capacidad: 2 adultos\n\n📍 UBICACIÓN:\nCalle Amores Número 8\n29400 Ronda, España\n\n☎️ TELÉFONO ALOJAMIENTO:\n+34637786105\n\n💰 PAGO:\n✓ Booking.com hará el cargo automáticamente en tu tarjeta\n✓ Te notificarán por email cuando el pago se realice correctamente\n✓ Si recibiste otras solicitudes de pago, infórma a Booking.com\n✓ Nunca compartas información personal por teléfono, email o chat\n\n📌 CANCELACIÓN:\n✓ Puedes cancelar GRATIS hasta el 1 de octubre de 2026 a las 23:59 [CEST]\n✓ Desde 2 octubre 00:00 en adelante: €73,71\n✓ Si no te presentas: pago igual al de cancelación\n✓ Puedes cancelar gratis hasta 5 días antes de la llegada\n✓ Durante los 5 días antes: precio total de la reserva\n\n⚠️ PIN CONFIDENCIAL:\n✓ Trata tu PIN como información confidencial\n✓ Se puede usar para cambiar o cancelar la reserva\n✓ Nunca lo compartas públicamente\n\n💡 IMPORTANTE:\n✓ Nunca te pidan información personal o de pago por teléfono\n✓ Ve siempre directamente a Booking.com o a su app para actualizar datos\n✓ Evita hacer clic en enlaces de pago sospechosos', completed: false }
+                        ]
+                    },
+                    {
+                        id: 'activities-8',
+                        name: 'Actividades',
+                        icon: '🎭',
+                        tasks: [
+                            { id: '26', title: '09:30–10:00 | Llegada y aparcamiento', details: 'Llegada a Ronda ~09:30\n\n🚗 ESTACIONAMIENTO:\n✓ Si el hotel aún no permite dejar equipaje → aparcar en parking público cerca del centro\n✓ Ir caminando\n✓ Centro histórico con calles estrechas\n✓ Más cómodo dejar el coche estacionado\n\n💡 Casco antiguo ideal para explorar a pie', completed: false },
+                            { id: '27', title: '10:00–11:15 | Plaza de Toros y Museo Taurino', details: '🐂 PLAZA DE TOROS Y MUSEO TAURINO\n\n⏰ HORARIO:\n✓ Octubre: abierto todos los días de 10:00 a 19:00\n\n💰 ENTRADA:\n✓ €10 entrada general\n✓ €12 con audioguía\n✓ Se puede comprar en el lugar\n\n💡 VISITA:\n✓ Interior opcional pero recomendable\n✓ Interesante si les atrae la historia taurina y ecuestre de Ronda\n✓ Audioguía disponible\n\n🌐 ALTERNATIVA:\n✓ Web oficial ofrece compra online si prefieren llevarla resuelta\n\n⏱️ Duración: 1 hora 15 minutos', completed: false },
+                            { id: '28', title: '11:15–12:00 | Alameda del Tajo y Paseo de Blas Infante', details: 'Paseo tranquilo con vistas\n\n📍 INCLUYE:\n✓ Alameda del Tajo\n✓ Paseo de Blas Infante\n\n👁️ VISTAS:\n✓ Vistas abiertas hacia la Serranía\n✓ Relajante y hermoso\n\n✓ No requiere entrada\n✓ Acceso libre\n\n⏱️ Duración: 45 minutos', completed: false },
+                            { id: '29', title: '12:00–13:15 | Puente Nuevo y miradores', details: '🌉 PUENTE NUEVO\n\n📍 ACTIVIDADES:\n✓ Cruzar el puente\n✓ Parar en los miradores\n✓ Disfrutar de las vistas del Tajo desde arriba\n\n💡 OPCIONAL - Senderos:\n✓ Hay cuestas y escalones si quieren bajar\n✓ No es necesario para apreciar el paisaje\n✓ Las vistas desde arriba son magníficas\n\n✓ Acceso libre\n✓ Sin entrada\n\n⏱️ Duración: 1 hora 15 minutos', completed: false },
+                            { id: '30', title: '13:15–14:30 | Almuerzo', details: 'Comida en Ronda\n\n📍 OPCIONES:\n✓ Elegir sobre la marcha por el centro\n✓ Casco antiguo\n✓ Plaza del Socorro\n✓ Calle Nueva\n\n💡 Tiempo para disfrutar sin prisas\n\n⏱️ Duración: 1 hora 15 minutos', completed: false },
+                            { id: '31', title: '14:30–15:30 | Desfiladero del Tajo', details: '🏜️ DESFILADERO DEL TAJO\n\n🎫 RESERVA CONFIRMADA:\n✓ Código: SIM-2026-130910\n✓ Nombre: Juan\n✓ Email: juanagustinsosa@hotmail.com\n✓ Teléfono: +34 683 248 140\n\n🎟️ INFORMACIÓN DE ENTRADA:\n✓ Producto: ENTRADAS DESFILADERO\n✓ Formato: ENTRADA GENERAL DESFILADERO DEL TAJO\n✓ Día: 2026-10-07\n✓ Hora: 14:40\n✓ Precio: 12,00€ x 2 personas\n✓ Código de entrada: d1d7f4a5-52c6-4e9a-a419-8f489d6821dc\n\n📍 ACCESO:\n✓ Plaza de María Auxiliadora como punto de acceso\n✓ Web oficial lo señala claramente\n\n⏰ HORARIO OCTUBRE: 10:00 a 20:00\n\n💡 TIEMPO ESTIMADO:\n✓ Web oficial: 20 minutos de visita\n✓ Recomendación: 1 hora\n  - Llegar con tiempo\n  - Recorrido con calma\n  - Regreso a parte alta\n\n⏱️ Duración: 1 hora', completed: false },
+                            { id: '32', title: '15:30–16:00 | Descanso y regreso al casco histórico', details: 'Recuperación tras Desfiladero\n\n💡 PAUSA:\n✓ Tómense algo\n✓ Descansen un poco\n✓ Recuperarse de la bajada y subida del desfiladero\n\n⏱️ Duración: 30 minutos', completed: false },
+                            { id: '33', title: '16:00–17:00 | La Ciudad - casco histórico', details: '🏛️ CASCO HISTÓRICO DE RONDA\n\n📍 INCLUYE:\n✓ Plaza Duquesa de Parcent\n✓ Colegiata de Santa María la Mayor (vista exterior)\n✓ Calles antiguas empedradas\n\n🏰 MONUMENTOS INTERIORES (ELEGIR UNO):\n✓ Palacio de Mondragón\n✓ Casa del Rey Moro\n  - Abre octubre: 10:00 a 20:00\n  - Visita mina y jardín histórico\n  - No sumaría esta además de Palacio - elegir según intereses\n\n💡 Paseo relajado por el centro medieval\n\n⏱️ Duración: 1 hora', completed: false },
+                            { id: '34', title: '17:00–18:00 | Baños Árabes', details: '🏛️ BAÑOS ÁRABES\n\n📍 UBICACIÓN:\n✓ Parte baja del casco antiguo\n\n🎫 ENTRADA:\n✓ Se compra allí\n✓ No hace falta reservar con antelación\n\n💡 IMPORTANCIA:\n✓ Buen complemento histórico después del Desfiladero\n✓ Visita breve pero significativa\n\n⏱️ Duración: 1 hora', completed: false },
+                            { id: '35', title: '18:00–19:00 | Jardines de Cuenca y Puente Viejo', details: '🌳 JARDINES DE CUENCA\n\n👁️ VISTAS:\n✓ Vistas al Tajo\n✓ Vistas al Puente Nuevo desde abajo\n✓ Perspectiva diferente a la de arriba\n\n💡 TOPOGRAFÍA:\n✓ Hay escaleras y cuestas\n✓ Si prefieren bajar el ritmo, pueden acortarlo\n✓ Regreso directo al centro\n\n✓ Acceso libre\n\n⏱️ Duración: 1 hora', completed: false },
+                            { id: '36', title: '19:00+ | Cena y paseo nocturno', details: 'Noche en Ronda\n\n📍 OPCIONES:\n✓ Cenar en el centro\n✓ Cenar en el casco antiguo\n\n💡 EXTRA:\n✓ Como duermen en Ronda\n✓ Pueden volver a los miradores al anochecer\n✓ Si les quedan ganas → paisaje nocturno espectacular\n\n⏱️ Tiempo flexible', completed: false },
+                            { id: '37', title: '🎫 Resumen de entradas y reservas', details: '✅ DESFILADERO DEL TAJO:\n✓ Entrada con horario: €12\n✓ Compra en web oficial\n✓ Reserva para 7 octubre (verificar horario)\n✓ Plaza de María Auxiliadora: punto de acceso\n\n✅ PLAZA DE TOROS Y MUSEO TAURINO:\n✓ Sin reserva previa necesaria\n✓ €10 entrada / €12 con audioguía\n✓ Compra en lugar o web oficial\n✓ Abierto 10:00-19:00 octubre\n\n✅ CASA DEL REY MORO:\n✓ Si eligen esta opción\n✓ Octubre: 10:00-20:00 diarios\n✓ Incluye mina y jardín histórico\n✓ No sumar con Palacio de Mondragón\n\n✅ ACCESO LIBRE:\n✓ Puente Nuevo, Alameda y miradores\n✓ Baños Árabes (entrada allí sin reserva)\n✓ Casco histórico y calles', completed: false },
+                            { id: '38', title: '👟 Tips para el día', details: '👟 CALZADO:\n✓ Cómodo y adecuado para caminar\n✓ Especialmente importante para:\n  - Desfiladero del Tajo\n  - Jardines de Cuenca\n  - Calles empedradas\n\n🎫 DESFILADERO:\n✓ Verificar en el billete: hora exacta\n✓ Verificar punto de acceso\n✓ Llegar con algo de margen\n\n🗺️ DIFERENCIAR:\n✓ Desfiladero = caminar por interior de garganta\n✓ Alameda y miradores = vistas desde arriba\n✓ Son experiencias distintas\n\n⏱️ SI SE APRIETA:\n✓ Recortar primero: Plaza de Toros O Baños Árabes\n✓ Mantener: Puente Nuevo y casco histórico\n\n❌ NO INCLUIR:\n✓ Setenil de las Bodegas\n✓ 20-25 minutos en coche\n✓ Sería muy apretado hoy\n✓ Mejor como alternativa o si llegan temprano', completed: false },
+                            { id: '39', title: '⭐ Qué priorizar en Ronda', details: '🔴 IMPRESCINDIBLE:\n✓ Puente Nuevo y Tajo\n✓ Casco histórico\n✓ Alameda\n✓ Al menos uno de los monumentos interiores\n\n🐂 SI INTERESA HISTORIA TAURINA:\n✓ Plaza de Toros y Museo Taurino\n\n🏞️ SI PREFIEREN PAISAJES Y ARQUITECTURA:\n✓ Dedicar más tiempo a miradores\n✓ Jardines de Cuenca\n✓ Paseo bajo el puente\n\n🚗 SETENIL DE LAS BODEGAS:\n✓ ALTERNATIVA (no incluir en plan completo)\n✓ 20-25 min en coche desde Ronda\n✓ Calles bajo la roca son llamativas\n✓ SOLO si llegan antes de 09:30\n✓ SOLO si recortan otras visitas en Ronda\n✓ No sumaría al itinerario completo (muy apretado)', completed: false }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: '9',
+                title: 'Día 9: Ronda → Málaga',
+                location: 'Málaga',
+                date: '8 de octubre (jueves)',
+                categories: [
+                    {
+                        id: 'transport-9',
+                        name: 'Transporte',
+                        icon: '✈️',
+                        tasks: [
+                            { id: '29', title: 'Conducir Ronda → Málaga (~100 km, ~1.5h)', details: '', completed: false }
+                        ]
+                    },
+                    {
+                        id: 'hotel-9',
+                        name: 'Alojamiento',
+                        icon: '🏨',
+                        tasks: [
+                            { id: '30', title: 'Check-in en hotel', details: '', completed: false }
+                        ]
+                    },
+                    {
+                        id: 'activities-9',
+                        name: 'Actividades (pendientes entradas)',
+                        icon: '🎭',
+                        tasks: [
+                            { id: '31', title: '07:30–09:00 | Ronda → Málaga', details: 'Conducción desde Ronda a Málaga\n\n💡 RECOMENDACIÓN:\n✓ Salgan temprano\n✓ Dejen margen para tráfico\n✓ Tiempo para encontrar aparcamiento\n\n📍 DISTANCIA: ~120 km (aproximadamente 1.5h)', completed: false },
+                            { id: '32', title: '09:00–10:00 | Llegada, coche y equipaje', details: 'Llegada a Málaga\n\n📍 ACTIVIDADES:\n✓ Llegar al hotel\n✓ Dejar coche de alquiler\n✓ Guardar equipaje\n\n💡 SI CHECK-IN NO DISPONIBLE:\n✓ Pregunten si pueden dejar las maletas\n✓ Aparquen el coche\n✓ Recorran el centro a pie\n\n⏱️ Duración: 1 hora', completed: false },
+                            { id: '33', title: '10:00–10:45 | Mercado de Atarazanas', details: '🏪 MERCADO DE ATARAZANAS\n\n💡 IMPORTANCIA:\n✓ Buena primera toma de contacto con el centro\n✓ Vida local y ambiente auténtico\n\n⚠️ CONTINGENCIA:\n✓ Si está cerrado o no hay tiempo\n✓ Continúen hacia el casco histórico\n\n⏱️ Duración: 45 minutos', completed: false },
+                            { id: '34', title: '10:45–11:30 | Centro histórico - Plaza y Catedral', details: '🏛️ PASEO POR EL CENTRO\n\n📍 RUTA:\n✓ Calle Larios\n✓ Plaza de la Constitución\n✓ Plaza del Obispo\n✓ Exterior de la Catedral\n\n💡 RECORRIDO:\n✓ Paseo por el centro histórico\n✓ Familiarizarse con la zona\n✓ Camino hacia la Catedral\n\n⏱️ Duración: 45 minutos', completed: false },
+                            { id: '35', title: '11:30–12:30 | Catedral de Málaga - La Manquita', details: '🏛️ CATEDRAL DE MÁLAGA (LA MANQUITA)\n\n💰 ENTRADA:\n✓ Entrada cultural: 10€\n✓ Incluye audioguía\n✓ Compra en línea o en la puerta\n\n📍 CONTENIDO:\n✓ Interior de La Manquita\n✓ Audioguía incluida en entrada\n\n⚠️ IMPORTANTE:\n✓ NO contar con visita a las cubiertas\n✓ Puede estar afectada por obras\n✓ Comprobar disponibilidad antes\n\n⏱️ Duración: 1 hora', completed: false },
+                            { id: '36', title: '12:30–13:45 | Almuerzo en el centro', details: 'Comida en Málaga\n\n📍 OPCIONES:\n✓ Alrededor de la Catedral\n✓ Plaza de la Merced\n✓ Calle Granada\n\n💡 ESTRATEGIA:\n✓ Elegir sobre la marcha\n✓ Según dónde estén\n✓ Según cuánto quieran detenerse\n\n⏱️ Duración: 1 hora 15 minutos', completed: false },
+                            { id: '37', title: '13:45–14:15 | Teatro Romano', details: '🏛️ TEATRO ROMANO\n\n📍 UBICACIÓN:\n✓ Junto a la Alcazaba\n✓ En la calle Alcazabilla\n\n💰 ENTRADA:\n✓ Visita libre GRATUITA\n✓ No requiere reserva\n\n💡 RECOMENDACIÓN:\n✓ Aunque no entren\n✓ Merece la pena verlo desde la calle Alcazabilla\n✓ Es un complemento al conjunto histórico\n\n⏱️ Duración: 30 minutos', completed: false },
+                            { id: '38', title: '14:15–15:45 | Alcazaba', details: '🏰 ALCAZABA - VISITA PRINCIPAL DEL DÍA\n\n🏛️ CONTENIDO:\n✓ Palacios\n✓ Patios\n✓ Jardines\n✓ Vistas sobre la ciudad\n\n⏰ HORARIO OCTUBRE:\n✓ Abierto: 09:00 a 20:00\n✓ Último acceso: 19:00\n\n💰 ENTRADA:\n✓ Entrada general: 7€\n✓ Se puede comprar en taquilla\n\n⏱️ TIEMPO ESTIMADO: 1–1.5 horas\n\n💡 IMPORTANCIA:\n✓ El monumento más característico de Málaga\n✓ No salir de Málaga sin visitarla', completed: false },
+                            { id: '39', title: '15:45–16:30 | Parque de Málaga', details: '🌳 PARQUE DE MÁLAGA\n\n📍 RUTA:\n✓ Bajar desde la Alcazaba\n✓ Paseo del Parque\n✓ Palmeral de las Sorpresas\n\n💡 TIPO DE PASEO:\n✓ Relajante y verde\n✓ Transición hacia la costa\n✓ Arbolado agradable\n\n⏱️ Duración: 45 minutos', completed: false },
+                            { id: '40', title: '16:30–17:30 | Muelle Uno y Centre Pompidou', details: '⛴️ MUELLE UNO\n\n📍 INCLUYE:\n✓ Paseo junto al puerto\n✓ Exterior del Centre Pompidou\n✓ Zona moderna y agradable\n\n💡 INFORMACIÓN:\n✓ NO hace falta reservar\n✓ Solo quieren recorrer la zona\n✓ Ver el cubo desde fuera\n✓ Paseo junto al mar\n\n⏱️ Duración: 1 hora', completed: false },
+                            { id: '41', title: '17:30–18:30 | La Malagueta y paseo marítimo (OPCIONAL)', details: '🏖️ LA MALAGUETA Y PASEO MARÍTIMO\n\n📍 ACTIVIDADES:\n✓ Caminar hasta la playa\n✓ Paseo marítimo\n✓ Regreso hacia el centro\n\n💡 CONTINGENCIA:\n✓ Opcional "si todavía tienen energía"\n✓ Pueden omitirse si están cansados\n✓ El día ya es bastante completo\n\n⏱️ Duración: 1 hora', completed: false },
+                            { id: '42', title: '19:00+ | Cena en el centro o puerto', details: 'Cena en Málaga\n\n📍 OPCIONES:\n✓ Centro histórico\n✓ Junto al puerto\n\n💡 INFORMACIÓN:\n✓ El coche puede quedarse aparcado\n✓ No necesitan conducir para este plan\n✓ Paseo a pie tranquilo\n\n⏱️ Tiempo flexible', completed: false },
+                            { id: '43', title: '💡 Si se retrasan o hay que recortar', details: '🔴 PRIORIDADES (en orden de importancia):\n\n1️⃣ IMPRESCINDIBLE:\n✓ Alcazaba y Teatro Romano\n✓ Forman el conjunto histórico más característico\n✓ NO sacrificar bajo ningún concepto\n\n2️⃣ MUY IMPORTANTE:\n✓ Paseo por el centro\n✓ Exterior de la Catedral\n✓ Plaza del Obispo\n✓ Al menos pasar por fuera si no hay tiempo de entrar\n\n3️⃣ IMPORTANTE:\n✓ Muelle Uno y puerto\n✓ Cerrar el día junto al mar\n\n⚠️ RECORTAR PRIMERO:\n✓ Paseo hasta La Malagueta\n✓ Interior de la Catedral (si falta tiempo)\n\n❌ NO INCLUIR:\n✓ Castillo de Gibralfaro\n✓ Aunque ofrece buenas vistas\n✓ No lo añadiría a este día\n✓ Solo si quieren priorizar miradores\n✓ Implica subida adicional\n\n⏰ MUSEO PICASSO:\n✓ Dejar fuera para que el día no sea una carrera\n✓ Si es prioridad: abre 10:00-19:00 (sept-oct)\n✓ Requiere quitar algo más importante\n✓ No recomendado para hoy', completed: false },
+                            { id: '44', title: '🎫 Entradas y reservas', details: '✅ ALCAZABA:\n✓ Entrada de pago: 7€\n✓ Compra en web municipal o taquilla\n✓ Entrada conjunta Alcazaba + Gibralfaro: 10€\n✓ Gibralfaro no está en itinerario base\n\n✅ CATEDRAL:\n✓ Entrada cultural: 10€ con audioguía\n✓ Compra en línea o en la puerta\n✓ Comprobar cambios cercanos a la fecha\n\n✅ TEATRO ROMANO:\n✓ Visita libre GRATUITA\n✓ No requiere reserva\n\n✅ ACCESO LIBRE:\n✓ Centro, parque, puerto y playa\n✓ No necesitan entrada\n\n⚠️ MUSEO PICASSO:\n✓ NO incluido en itinerario base\n✓ Si es prioridad: abre 10:00-19:00\n✓ Habría que quitar otra visita\n✓ Horarios: comprobar cercanos a fecha', completed: false },
+                            { id: '45', title: '👟 Tips prácticos para Málaga', details: '🏨 EQUIPAJE:\n✓ Pregunten en hotel si pueden guardar equipaje\n✓ Antes del check-in oficial\n✓ Permite disfrutar del día sin mochilas\n\n🅿️ COCHE:\n✓ NO intenten recorrer el centro histórico con coche\n✓ Aparquen UNA SOLA VEZ\n✓ Hagan el circuito principal a pie\n✓ Más cómodo y seguro\n\n🕐 HORARIOS:\n✓ Comprueben horarios de Catedral y Alcazaba\n✓ Posibles cambios cercanos a la fecha\n✓ Verificar antes de llegar\n✓ Último acceso Alcazaba: 19:00\n\n👟 CALZADO:\n✓ Lleven calzado cómodo\n✓ Alcazaba tiene:\n  - Pendientes\n  - Escalones\n  - Pavimento irregular\n✓ Caminarán bastante', completed: false }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: '10',
+                title: 'Día 10: Málaga → Granada',
+                location: 'Granada',
+                date: '9 de octubre (viernes)',
+                categories: [
+                    {
+                        id: 'transport-10',
+                        name: 'Transporte',
+                        icon: '✈️',
+                        tasks: [
+                            { id: '32', title: 'Conducir Málaga → Granada (~120 km, ~1.5h)', details: '', completed: false },
+                            { id: '33', title: 'Devolver coche de alquiler', details: '', completed: false }
+                        ]
+                    },
+                    {
+                        id: 'hotel-10',
+                        name: 'Alojamiento',
+                        icon: '🏨',
+                        tasks: [
+                            { id: '34', title: 'Check-in en B&B Hotel Granada Estación', details: '🏨 GRANADA - B&B HOTEL GRANADA ESTACIÓN\n\n📋 CONFIRMACIÓN:\n✓ Booking No.: 1132549222025726\n✓ Booking Amount: CNY 881.03 (Prepagado)\n\n🕐 CHECK-IN / CHECK-OUT:\n✓ Check-in: 9 oct, After 14:00\n✓ Check-out: 10 oct, before 12:00\n\n🏠 HABITACIÓN:\n✓ Tipo: Double Room With View\n✓ Cantidad: 1 habitación\n✓ Huéspedes: Juan Agustin Sosaardiles, Michelle Hui, Yeeszemichelevanessa\n\n📍 DIRECCIÓN:\nAv. de Juan Pablo II, 35, Norte\nGranada, Andalusia\n18014, Spain\n\n☎️ TELÉFONO HOTEL:\n+34-958-163500\n\n💡 INFO IMPORTANTE:\n✓ Desayuno: NO INCLUIDO\n✓ Tarifa: Member hotel\n✓ Pago: Personal account (PREPAGADO)\n✓ Hotel no emite recibo directo\n\n📌 CANCELACIÓN:\n✓ Cancelación gratuita antes de 11:59 PM, 8 oct (GMT+8) - 6:00 PM, 8 oct (hotel time)\n✓ No-show: Se cobrará la primera noche (CNY 881.03)\n\n💡 Nota: Para modificaciones, contactar directamente con el hotel', completed: false }
+                        ]
+                    },
+                    {
+                        id: 'activities-10',
+                        name: 'Actividades (pendientes entradas)',
+                        icon: '🎭',
+                        tasks: [
+                            { id: '35', title: '10:00 | Llegada a Granada en coche desde Málaga', details: 'Conducción desde Málaga\n\n💡 Hora de llegada estimada: 10:00', completed: false },
+                            { id: '36', title: '10:00–10:15 | Ir directamente al B&B Hotel Granada Estación', details: 'Primer destino: alojamiento\n\n📍 Hotel: B&B HOTEL Granada Estación\n✓ Ubicación conocida de la zona de la estación', completed: false },
+                            { id: '37', title: '10:15–10:30 | Dejar maletas en recepción', details: 'Depósito de equipaje\n\n💡 IMPORTANTE:\n✓ Aunque la habitación probablemente no esté disponible\n✓ El hotel tiene recepción 24 h\n✓ Las maletas se guardan en recepción', completed: false },
+                            { id: '38', title: '10:30–10:50 | Conducir hasta Granada Estación Central / Renfe', details: 'Traslado hacia la estación para devolución de coche', completed: false },
+                            { id: '39', title: '10:50–11:15 | Devolución del coche', details: 'Devolución del vehículo de alquiler\n\n⏰ INFORMACIÓN:\n✓ Límite de devolución: 14:00\n✓ Preferencia: devolución inmediata para quitarse esta obligación\n\n💡 DESPUÉS:\n✓ Taxi/bus al hotel\n✓ Dejar equipaje\n✓ Si B&B Granada Estación, adaptaremos porque está hacia la estación de autobuses', completed: false },
+                            { id: '40', title: '11:15–11:30 | Desde la estación, taxi/bus hacia Catedral / Plaza Bib-Rambla', details: 'Traslado al centro histórico', completed: false },
+                            { id: '41', title: '11:30–12:00 | Plaza Bib-Rambla → Alcaicería → Plaza de las Pasiegas', details: 'Primera toma de contacto con el centro histórico\n\n📍 RUTA:\nPlaza Bib-Rambla → Alcaicería → Plaza de las Pasiegas\n\n💡 LA ALCAICERÍA:\n✓ Es pequeña\n✓ No dedicar demasiado tiempo\n✓ Paseo introductorio', completed: false },
+                            { id: '42', title: '12:00–12:50 | Catedral de Granada', details: '🏛️ CATEDRAL DE GRANADA\n\n💰 ENTRADA:\n✓ Cuesta 10€\n✓ Viernes: abierta para visita cultural durante esta franja\n✓ Nota: Actualmente (mayo-noviembre 2026) alberga la exposición "Kerygma"\n\n⏱️ Duración: 50 minutos', completed: false },
+                            { id: '43', title: '12:50–13:30 | Capilla Real', details: '🏛️ CAPILLA REAL\n\n📍 UBICACIÓN:\n✓ Prácticamente pegada a la Catedral\n✓ Muy cercana - transición fácil\n\n💰 ENTRADA:\n✓ 7€\n\n⭐ HISTÓRICA:\n✓ Aquí están los sepulcros de los Reyes Católicos\n✓ Históricamente más interesante que intentar añadir otro museo\n\n⏱️ Duración: 40 minutos', completed: false },
+                            { id: '44', title: '13:30–13:45 | Corral del Carbón', details: '🏛️ CORRAL DEL CARBÓN\n\n📍 UBICACIÓN:\n✓ Muy cerca de Capilla Real\n✓ Perfectamente encajado en la ruta\n\n📜 HISTORIA:\n✓ Antigua alhóndiga nazarí del siglo XIV\n✓ Visita corta y perfecta para este momento\n\n⏱️ Duración: 15 minutos', completed: false },
+                            { id: '45', title: '13:45–15:00 | Almuerzo', details: 'Comida en Granada\n\n📍 ZONAS RECOMENDADAS:\n✓ Bib-Rambla\n✓ Reyes Católicos\n✓ Plaza Nueva\n\n💡 ESTRATEGIA:\n✓ No reservar nada\n✓ Granada es precisamente una ciudad donde merece la pena decidir según lo que encontréis\n✓ Flexibilidad y espontaneidad\n\n⏱️ Duración: 1 hora 15 minutos', completed: false },
+                            { id: '46', title: '15:00–15:25 | Plaza Nueva + comienzo de Carrera del Darro', details: 'Inicio de una de las partes más bonitas del viaje\n\n📍 RUTA:\n✓ Plaza Nueva\n✓ Comienzo de Carrera del Darro\n\n💡 IMPORTANCIA:\n✓ Empieza aquí una de las partes más bonitas del viaje\n✓ Ubicación estratégica antes de El Bañuelo\n\n⏱️ Duración: 25 minutos', completed: false },
+                            { id: '47', title: '15:25–15:50 | El Bañuelo', details: '🏛️ EL BAÑUELO\n\n📍 PEQUEÑOS BAÑOS ÁRABES DEL SIGLO XI\n\n💡 IMPORTANCIA:\n✓ Visita corta pero muy interesante\n✓ Compensa parcialmente no entrar en Palacios Nazaríes\n✓ Literalmente sobre vuestro recorrido\n✓ Ubicación perfecta en la Carrera del Darro\n\n⏱️ Duración: 25 minutos', completed: false },
+                            { id: '48', title: '15:50–16:30 | Carrera del Darro - paseo lento', details: '🌳 PASEO POR CARRERA DEL DARRO\n\n📍 ACTIVIDADES:\n✓ Continuar lentamente por Carrera del Darro\n✓ Cruzar sus pequeños puentes\n✓ Mirar hacia la Alhambra\n\n💡 IMPORTANCIA:\n✓ El Ayuntamiento la considera uno de los paseos históricos imprescindibles\n✓ Desde ella se ve la fortaleza sobre el bosque\n✓ Una de las perspectivas más hermosas\n\n⏱️ Duración: 40 minutos', completed: false },
+                            { id: '49', title: '16:30–17:00 | Paseo de los Tristes', details: '👁️ PASEO DE LOS TRISTES\n\n📍 PRIMERA GRAN PERSPECTIVA DESDE ABAJO DE LA ALHAMBRA\n\n📸 FOTOGRAFÍA:\n✓ Haría bastantes fotos aquí\n✓ Pero NO las definitivas\n✓ Volveremos cuando esté iluminada\n\n⏱️ Duración: 30 minutos', completed: false },
+                            { id: '50', title: '17:00–18:15 | Subida y paseo por el Albaicín', details: '🏛️ ALBAICÍN - PARTE ESENCIAL\n\n📍 RUTA:\n✓ Cuesta del Chapiz\n✓ Callejuelas blancas\n✓ Plaza Larga\n✓ Entorno de San Nicolás\n\n💡 ESTRATEGIA:\n✓ No intentar recorrer todas las calles\n✓ La gracia es callejear sin obsesionarse con monumentos\n✓ Paseo orgánico por el barrio\n\n⭐ IMPORTANTÍSIMO:\n✓ Albaicín, no solo San Nicolás\n✓ Merece caminar un poco por sus calles\n✓ Esto es un "SÍ O SÍ"\n\n⏱️ Duración: 1 hora 15 minutos', completed: false },
+                            { id: '51', title: '18:15–18:40 | Llegar al Mirador de San Nicolás', details: '⏰ LLEGADA ESTRATÉGICA\n\n💡 TIMING CRÍTICO:\n✓ Importante hacerlo con tiempo\n✓ Cerca del atardecer suele concentrarse bastante gente\n✓ Llegar para asegurar buen lugar\n\n⏱️ Duración: 25 minutos', completed: false },
+                            { id: '52', title: '18:40–19:35 | Iglesia y Torre de San Nicolás (opcional)', details: '🏛️ IGLESIA Y TORRE DE SAN NICOLÁS\n\n💰 ENTRADA:\n✓ 3€\n✓ Opcional pero recomendable\n\n⏰ HORARIO:\n✓ Octubre: abre por la tarde 17:00–20:00\n✓ Encaja perfectamente en el horario\n\n⏱️ Duración: 55 minutos', completed: false },
+                            { id: '53', title: '19:35–20:15 | ⭐ MIRADOR DE SAN NICOLÁS - MOMENTO CLAVE', details: '⭐⭐⭐ MIRADOR DE SAN NICOLÁS - MOMENTO CLAVE DEL VIAJE ⭐⭐⭐\n\n🌅 PUESTA DE SOL:\n✓ 9 de octubre: sol se pone a las 19:46\n✓ Crepúsculo civil termina aproximadamente a las 20:12\n✓ HAY QUE QUEDARSE DURANTE TODA ESA TRANSICIÓN\n\n📸 IMPORTANCIA:\n✓ Este es el momento más crítico del itinerario\n✓ No movería esto de aquí\n✓ Experiencia imprescindible de Granada\n\n💡 LO QUE VAS A VER:\n✓ Transición de luz natural a artificial\n✓ Alhambra iluminándose progresivamente\n✓ La ciudad transformándose\n✓ Uno de los momentos más mágicos del viaje\n\n⏱️ Duración: 40 minutos\n\n⭐ ESTO NO SE MUEVE - "SÍ O SÍ" de 19:15 a 20:10', completed: false },
+                            { id: '54', title: '20:15–20:50 | Bajar por el Albaicín hacia Paseo de los Tristes - NOCHE', details: '🌙 DESCENSO NOCTURNO\n\n📍 RUTA:\n✓ Bajar nuevamente por el Albaicín\n✓ Hacia Paseo de los Tristes\n✓ Carrera del Darro\n✓ Ahora ya de noche\n\n💡 EXPERIENCIA:\n✓ El barrio se transforma de noche\n✓ Callejuelas iluminadas\n✓ Atmósfera completamente diferente\n\n⏱️ Duración: 35 minutos', completed: false },
+                            { id: '55', title: '20:50–21:10 | ⭐ Paseo de los Tristes de noche', details: '⭐ PASEO DE LOS TRISTES ILUMINADA\n\n📸 SEGUNDA SESIÓN FOTOGRÁFICA\n✓ Segunda sesión fotográfica de la Alhambra\n✓ Esta vez ILUMINADA directamente sobre vosotros\n✓ Las fotos de noche superan a las del atardecer\n\n💡 COMPARACIÓN:\n✓ PRIMERA VEZ: luz natural, primeras fotos\n✓ SEGUNDA VEZ: luz artificial, fotos definitivas\n\n⏱️ Duración: 20 minutos\n\n⭐ ESTO ES UN "SÍ O SÍ":\n✓ Carrera del Darro + Paseo de los Tristes\n✓ Una vez con luz y otra de noche', completed: false },
+                            { id: '56', title: '21:15 en adelante | Cena/tapas y regreso', details: 'Cierre del día en Granada\n\n🍽️ CENA:\n✓ Cena/tapas por:\n  - Plaza Nueva\n  - Calle Elvira\n  - Reyes Católicos\n  - Calle Navas\n\n💡 DESPUÉS:\n✓ Paseo tranquilo por el centro\n✓ Regreso al hotel\n\n⏱️ Tiempo flexible', completed: false },
+                            { id: '57', title: '⭐ IMPRESCINDIBLE - Debe cumplirse', details: '🔴 IMPRESCINDIBLES (aunque haya retrasos):\n\n1. ⭐ MIRADOR DE SAN NICOLÁS 19:15–20:10\n   - El sol se pone a las 19:46\n   - NO mover esto\n   - Transición completa de luz\n\n2. ⭐ CARRERA DEL DARRO + PASEO DE LOS TRISTES\n   - Una vez con luz\n   - Otra de noche\n   - Ambas sesiones son críticas\n\n3. ⭐ ALBAICÍN\n   - No solo San Nicolás\n   - Merece caminar por sus calles\n   - Barrio completo, no puntual\n\n4. ⭐ SUBIR AL RECINTO DE LA ALHAMBRA (sin entrada)\n   - Puerta de la Justicia\n   - Carlos V\n   - Entorno exterior\n   - Bosque\n   - No irse sin pisar realmente la Alhambra\n\n5. ⭐ CATEDRAL + CAPILLA REAL\n   - Mejores visitas interiores sencillas\n   - Accesibles y significativas\n\n⚠️ SI FALTA TIEMPO:\n✓ Sacrificar primero: Silla del Moro\n✓ Después: Carmen de los Mártires\n✓ NO sacrificar: Carlos V ni descenso por el bosque', completed: false },
+                            { id: '58', title: '💡 Ventaja importante del diseño', details: 'FLEXIBILIDAD CON ALHAMBRA\n\n💡 ESTRATEGIA:\n✓ Si el 9 por la noche aparece una entrada oficial para la Alhambra el 10\n✓ Simplemente reemplazamos el bloque del sábado mañana\n✓ Por la visita completa de Palacios Nazaríes\n✓ Mantenemos todo lo demás\n✓ No se rompe el itinerario\n✓ Es un insert limpio\n\n✅ VENTAJA:\n✓ Itinerario flexible\n✓ Preparado para adaptarse\n✓ Sin desorganización si surge entrada', completed: false },
+                            { id: '59', title: '⭐ IMPRESCINDIBLE - Granada sin Palacios Nazaríes', details: 'FILOSOFÍA DEL PLAN B\n\n💭 APROXIMACIÓN:\n✓ NO intentar "compensar" la falta de Palacios Nazaríes\n✓ Con diez iglesias y museos adicionales\n\n✨ LO QUE HACE ESPECIAL A GRANADA:\n✓ Albaicín\n✓ Calles árabes\n✓ Darro\n✓ La colina de la Alhambra\n✓ Atardecer\n✓ Iluminación nocturna\n✓ La propia presencia física del complejo monumental\n\n💪 FORTALEZA DEL PLAN:\n✓ Incluso sin los Palacios Nazaríes\n✓ Este plan queda bastante fuerte\n✓ Sin pagar 350€ por dos personas en entradas\n✓ Experiencia de Granada genuina y memorable', completed: false },
+                            { id: '60', title: '📸 Tips fotográficos - Mirador de San Nicolás', details: '🏛️ LO QUE VAS A VER DESDE SAN NICOLÁS:\n\n✓ Generalife\n✓ Partal\n✓ Comares\n✓ Palacios Nazaríes\n✓ Carlos V\n✓ Alcazaba\n✓ Sierra Nevada detrás\n\n💡 PERSPECTIVA:\n✓ Prácticamente todo el conjunto de izquierda a derecha\n✓ Una de las mejores perspectivas de la Alhambra completa\n\n📸 ESTRATEGIA FOTOGRÁFICA:\n\n⏰ TIMING CRÍTICO:\n✓ NO llegaría simplemente a las 19:45\n✓ El secreto es quedarse aproximadamente 1 hora y 30 minutos\n\n🕕 FASES DE FOTOGRAFÍA:\n\n1️⃣ 19:10–19:35 | LUZ CÁLIDA\n✓ Fotos con luz cálida sobre los muros\n✓ Color dorado en la Alhambra\n✓ Primeras fotos del atardecer\n\n2️⃣ 19:40–19:55 | PUESTA DEL SOL\n✓ Puesta del sol en vivo\n✓ Colores del cielo cambiantes\n✓ Momento más dramático\n\n3️⃣ 19:55–20:12 | HORA AZUL + ILUMINACIÓN ARTIFICIAL\n✓ Hora azul (crepúsculo civil)\n✓ Iluminación artificial empezando a dominar\n✓ Transición completada\n\n📱 TIPS CON EL IPHONE:\n\n✓ FOTOS NOCTURNAS:\n  - Apoyar el teléfono contra una pared/barandilla\n  - O usar tu estabilizador DJI OM8 cuando lo tengas\n  - El modo noche funciona mucho mejor\n  - Si el teléfono permanece completamente inmóvil\n\n💡 IMPORTANCIA:\n✓ La inmovilidad es clave para las fotos de noche\n✓ No aguantar el teléfono a mano\n✓ Buscar apoyo o usar estabilizador\n✓ Paciencia y exposición larga = mejores resultados', completed: false }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: '11',
+                title: 'Día 11: Granada - Madrid (se toma AVE)',
+                location: 'Madrid',
+                date: '10 de octubre (sábado)',
+                categories: [
+                    {
+                        id: 'transport-11',
+                        name: 'Transporte',
+                        icon: '✈️',
+                        tasks: [
+                            { id: '37', title: 'Traslado hotel → Estación (AVE)', details: 'Ir a la Estación de Granada para tomar el AVE', completed: false },
+                            { id: '38', title: '🚄 18:05 | AVE Granada → Madrid P. Atocha', details: '🎫 INFORMACIÓN DE LOS BILLETES:\n\n📍 Trayecto: Granada → Madrid P. Atocha\n🕐 Horario: 10/10/2026 - 18:05 → 21:53\n🚂 Tren: AVE 02197 | ESTANDAR (Sin Restauración)\n🚗 Vagón: 32\n🔇 Zona: SILENCIO\n\n👤 PASAJEROS Y BILLETES:\n\n1. AGUSTIN (J.SOSA.ARDILES):\n   💺 Plaza: 4B\n   🎫 Localización: FDYWGK\n   🎟️ Billete: 7745602088569\n   💰 Precio: 39,00€\n   📝 DNI: *****056J\n   🔖 T. RENFE: 23326283\n   🎫 Combinado Cercanías: XR4V7\n\n2. MICHELLE (M.HUI):\n   💺 Plaza: 4A\n   🎫 Localización: FDYWGK\n   🎟️ Billete: 7745602088577\n   💰 Precio: 39,00€\n   📝 DNI: *****7172\n   🔖 Combinado Cercanías: 8UKUX\n\n💰 TOTAL: 78,00€ (ambos billetes)\n\n⏱️ IVA: 10% = 3,55€\n\n⚠️ IMPORTANTE:\n✓ Cierre acceso tren 2 min antes salida\n✓ Zona de Silencio\n✓ Sin Restauración\n\n📄 Descargar: Billetes PDF adjuntos (FDYWGK)', completed: false }
+                        ]
+                    },
+                    {
+                        id: 'activities-11',
+                        name: 'Actividades',
+                        icon: '🎭',
+                        tasks: [
+                            { id: '40', title: '08:00–08:30 | Desayuno', details: 'Desayuno en el hotel', completed: false },
+                            { id: '41', title: '08:30 | Check-out y dejar maletas', details: 'Check-out del hotel\n\n💡 FUNDAMENTAL:\n✓ Dejar las maletas en el hotel\n✓ No cargar con ellas durante esta mañana\n✓ Recogerlas al final del día antes de ir a la estación', completed: false },
+                            { id: '42', title: '08:40–09:00 | Subir a la Alhambra', details: 'Transporte a la Alhambra\n\n🚌 OPCIONES:\n✓ Minibús C32 (si estáis en el centro)\n✓ Taxi\n\n📍 DESTINO:\n✓ El C32 llega a:\n  - Generalife\n  - Palacio de Carlos V\n  - Puerta de la Justicia', completed: false },
+                            { id: '43', title: '09:00–09:20 | Puerta de la Justicia + exteriores', details: '🏛️ PUERTA DE LA JUSTICIA\n\n💡 EXPERIENCIA:\n✓ Ya empezáis a sentir realmente que estáis dentro del complejo Alhambra\n✓ Aunque no tengáis acceso a sectores controlados\n✓ Entorno exterior de las murallas\n\n⏱️ Duración: 20 minutos', completed: false },
+                            { id: '44', title: '09:20–09:35 | Puerta del Vino + exteriores', details: '🏛️ PUERTA DEL VINO + ALCAZABA Y PALACIOS NAZARÍES (EXTERNOS)\n\n💡 LO QUE PODÉIS VER:\n✓ Puerta del Vino\n✓ Exteriores de Alcazaba\n✓ Exteriores de Palacios Nazaríes\n\n⚠️ LIMITACIÓN:\n✓ No podréis atravesar los controles de las zonas de pago\n✓ Pero sí recorrer esta parte PÚBLICA del conjunto\n\n⏱️ Duración: 15 minutos', completed: false },
+                            { id: '45', title: '09:35–10:10 | ⭐ Palacio de Carlos V', details: '⭐ PALACIO DE CARLOS V\n\n🏛️ ARQUITECTURA:\n✓ Extraordinario patio circular renacentista\n✓ Completamente diferente de lo nazarí\n✓ Merece mucho la pena entrar\n\n💡 IMPORTANCIA:\n✓ Transición arquitectónica\n✓ Simboliza el cambio de poder\n✓ Interior impresionante\n\n✓ Entrada gratuita\n\n⏱️ Duración: 35 minutos', completed: false },
+                            { id: '46', title: '10:10–10:40 | Museo de la Alhambra', details: '🏛️ MUSEO DE LA ALHAMBRA\n\n📍 UBICACIÓN:\n✓ Dentro del Palacio Carlos V\n\n💰 ENTRADA:\n✓ Libre / Gratuita\n\n🎨 CONTENIDO:\n✓ Piezas originales nazaríes\n✓ Ayuda bastante a entender lo que habríais visto en los Palacios\n✓ Contexto histórico y artístico\n\n⏱️ Duración: 30 minutos', completed: false },
+                            { id: '47', title: '10:40–11:00 | Santa María de la Alhambra', details: '🏛️ SANTA MARÍA DE LA ALHAMBRA\n\n📍 INCLUYE:\n✓ Exteriores de la iglesia\n✓ Jardines públicos\n✓ Puertas, murallas y torres\n\n📸 OBJETIVO:\n✓ Fotos de detalles\n✓ Perspectivas arquitectónicas\n✓ Elementos decorativos\n\n⏱️ Duración: 20 minutos', completed: false },
+                            { id: '48', title: '11:00–11:45 | ⭐ Silla del Moro (OPCIONAL)', details: '⭐ SILLA DEL MORO\n\n📍 UBICACIÓN:\n✓ Pendiente fuera de la Alhambra\n✓ Vistas desde otra perspectiva\n\n⏰ HORARIO SÁBADO:\n✓ Abierta gratuitamente\n✓ 08:30–20:00\n\n👁️ VISTAS:\n✓ Generalife\n✓ Alhambra completa\n✓ Albaicín/Sacromonte\n✓ Perspectiva diferente a la del Mirador San Nicolás\n\n💡 ESTRATEGIA:\n✓ "Siempre que estéis con ganas de caminar"\n✓ Requiere más esfuerzo físico\n✓ Vale la pena por las vistas\n✓ Sin entrada, es el lugar perfecto para esta mañana\n\n⏱️ Duración: 45 minutos', completed: false },
+                            { id: '49', title: '11:45–12:00 | Regreso hacia la Alhambra', details: 'Si visitáis Silla del Moro, regreso hacia el área central\n\n⏱️ Duración: 15 minutos', completed: false },
+                            { id: '50', title: '12:00–12:40 | Carmen de los Mártires', details: '🌳 CARMEN DE LOS MÁRTIRES\n\n🏛️ TIPO:\n✓ Jardines románticos\n✓ Estanques\n✓ Vegetación abundante\n✓ Rincones muy fotogénicos\n\n⏰ HORARIO SÁBADO:\n✓ 10/10 está abierto de 10:00 a 20:00\n\n💡 IMPORTANCIA:\n✓ Complementa perfectamente la mañana\n✓ Ambiente diferente (más verde y tranquilo)\n✓ Muy apropiado para fotos\n\n⏱️ Duración: 40 minutos', completed: false },
+                            { id: '51', title: '12:40–13:10 | ⭐ Descenso por Bosque de la Alhambra', details: '⭐ DESCENSO PEATONAL - PARTE ESENCIAL\n\n📍 RUTA:\nBosque de la Alhambra → Puerta de las Granadas → Cuesta de Gomérez → Plaza Nueva\n\n💡 ESTRATEGIA:\n✓ NO coger el bus para bajar\n✓ Este paseo forma parte de la experiencia\n✓ Ves dos caras completamente distintas de la colina\n✓ No repites camino\n\n👣 EXPERIENCIA:\n✓ Descenso lento y orgánico\n✓ Naturaleza\n✓ Perspectivas nuevas\n✓ Conexión con la ciudad\n\n⭐ IMPORTANTE:\n✓ Esto es "SÍ O SÍ"\n✓ No sacrificar por nada\n✓ El descenso es tan importante como la subida\n\n⏱️ Duración: 30 minutos', completed: false },
+                            { id: '52', title: '13:15–14:30 | Almuerzo tranquilo en el centro', details: 'Comida en Granada\n\n📍 ZONA:\n✓ Centro histórico\n\n💡 RITMO:\n✓ Tranquilo\n✓ Sin prisas\n✓ Recuperarse de las caminatas\n\n⏱️ Duración: 1 hora 15 minutos', completed: false },
+                            { id: '53', title: '14:30–15:30 | Último paseo y compras', details: 'Paseo final por Granada\n\n📍 RUTA:\nReyes Católicos → Alcaicería → Bib-Rambla\n\n🛍️ ACTIVIDADES:\n✓ Compras/recuerdos\n✓ Café\n✓ Fotos finales\n\n💡 COLCHÓN:\n✓ Si algo del día anterior quedó pendiente\n✓ Este es el momento para recuperarlo\n\n⏱️ Duración: 1 hora', completed: false },
+                            { id: '54', title: '15:30–16:00 | Regreso al hotel y equipaje', details: 'Preparación para salida\n\n📍 ACTIVIDADES:\n✓ Regreso al hotel\n✓ Recoger equipaje\n✓ Último check de cosas personales\n\n⏱️ Duración: 30 minutos', completed: false },
+                            { id: '55', title: '16:00–16:30 | Traslado a estación', details: 'Taxi o transporte a Granada Estación\n\n📍 DESTINO:\nGranada Estación de Ferrocarril\n\n💡 TIEMPO:\n✓ Más de una hora de margen antes del AVE\n✓ Incluso con pequeños retrasos durante el día\n✓ No iremos nerviosos\n\n⏱️ Duración: 30 minutos', completed: false },
+                            { id: '56', title: '16:30–16:45 | Llegada a la estación', details: 'Llegada a Granada Estación\n\n✓ Check-in del tren\n✓ Confirmación de acceso al andén\n✓ Preparación para embarque\n\n⏱️ Duración: 15 minutos', completed: false },
+                            { id: '57', title: '💡 El truco del Día 11', details: 'ESTRATEGIA DE MOVILIDAD\n\n🚌 PARA SUBIR:\n✓ Usar transporte público/taxi\n✓ Ahorrar piernas para lo importante\n\n🚶 PARA BAJAR:\n✓ Hacer el recorrido PEATONAL completo\n✓ Bosque Alhambra → Cuesta de Gomérez\n✓ Así:\n  ✓ No repites camino\n  ✓ Ves dos caras distintas de la colina\n  ✓ Experiencia más memorable\n\n⭐ SILLA DEL MORO - VENTAJA ESPECIAL:\n✓ Normalmente no es prioridad en primera visita\n✓ Porque con entrada se dedican esas horas a Palacios y Generalife\n✓ PERO SIN ENTRADA:\n✓ Es exactamente el tipo de lugar que merece aprovechar\n✓ Vistas complementarias\n✓ Experiencia única', completed: false }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: '12',
+                title: 'Día 12: Madrid - Vuelta Michelle a SH y Agustin vuelo a Coruña',
+                location: 'Madrid',
+                date: '11 de octubre (domingo)',
+                categories: [
+                    {
+                        id: 'transport-12',
+                        name: 'Transporte',
+                        icon: '✈️',
+                        tasks: [
+                            { id: '40', title: 'Check-out hotel', details: '', completed: false },
+                            { id: '41', title: 'Traslado hotel → Aeropuerto', details: '', completed: false },
+                            { id: '42', title: 'Vuelo Madrid → Shanghai (Michelle)', details: 'Flight Ticket(s) Issued (HUI/YEESZEMICHELEVANESSA Shanghai - Madrid Round-trip 1132548481233470)\n\n✈️ TRAMO 1: Madrid → Beijing\n🚂 Vuelo: CA908 | Boeing 787 | Economy class\n📅 Salida: 12:55, Sun, Oct 11, 2026, Madrid Barajas Airport T1\n📅 Llegada: 06:00, Mon, Oct 12, 2026, Beijing Capital International Airport T3\n⏱️ Duración del vuelo: 11 h 5 m\n\n🔄 CONEXIÓN EN BEIJING\n⏰ Escala: 1 hr 40 min\n\n✈️ TRAMO 2: Beijing → Shanghai\n🚂 Vuelo: CA8357 | Airbus 330 | Economy class\n📅 Salida: 07:40, Mon, Oct 12, 2026, Beijing Capital International Airport T3\n📅 Llegada: 09:55, Mon, Oct 12, 2026, Shanghai Pudong International Airport T2\n⏱️ Duración del vuelo: 2 h 15 m\n\n⚠️ IMPORTANTE:\n✓ Embarque: 60 minutos antes de la salida\n✓ Llevar documentación y pasaporte', completed: false },
+                            { id: '43', title: 'Vuelo Madrid → Coruña (Agustin)', details: 'Flight Ticket(s) Issued (SOSAARDILES/JUAN AGUSTIN Madrid - La Coruna Round-trip 1132549284722750)\n\n✈️ INFORMACIÓN DEL VUELO:\n🚂 Vuelo: UX7231 | Boeing 737 | Economy class\n🔄 Codeshare: Air Europa Express X5\n📅 Salida: 10:35, Sun, Oct 11, 2026, Madrid Barajas Airport T2\n📅 Llegada: 11:50, Sun, Oct 11, 2026, A Coruna Airport\n⏱️ Duración del vuelo: 1 h 15 m\n\n⚠️ IMPORTANTE:\n✓ Embarque: 60 minutos antes de la salida\n✓ Llevar documentación y pasaporte\n✓ Equipaje: Recordar recogerlo en Coruña', completed: false }
+                        ]
+                    },
+                    {
+                        id: 'hotel-12',
+                        name: 'Alojamiento',
+                        icon: '🏨',
+                        tasks: [
+                            { id: '44', title: 'Estancia en la casa de Javier', details: '', completed: false }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: '13',
+                title: 'Día 13: Coruña (feriado)',
+                location: 'Coruña',
+                date: '12 de octubre (lunes)',
+                categories: [
+                    {
+                        id: 'hotel-13',
+                        name: 'Alojamiento',
+                        icon: '🏨',
+                        tasks: [
+                            { id: '45', title: 'Check-in en Melia Maria Pita Hotel', details: '🏨 CORUÑA - MELIA MARIA PITA HOTEL\n\n📍 DIRECCIÓN:\nAv. de Pedro Barrié de la Maza, 3\nA Coruña, Galicia, Spain\n\n🕐 FECHAS DE ESTANCIA:\n✓ Check-in: 12/Oct/2026\n✓ Check-out: 13/Oct/2026\n\n🏠 HABITACIÓN:\n✓ Tipología: Melia Room\n✓ Régimen: Desayuno incluido\n✓ Uso: Individual (single use)\n\n💰 PRECIO:\n✓ Precio por noche: EUR 68 por habitación\n✓ Aproximadamente: CNY 530 por noche\n✓ Con desayuno incluido\n\n📌 CANCELACIÓN:\n✓ Cancelación gratuita antes de 2026-10-09 18:00\n\n💡 IMPORTANTE:\n✓ Desayuno INCLUIDO\n✓ Confirmación directa con el hotel recomendada', completed: false }
+                        ]
+                    },
+                    {
+                        id: 'activities-13',
+                        name: 'Actividades',
+                        icon: '🎭',
+                        tasks: [
+                            { id: '46', title: 'Actividades con Javier por Galicia', details: '', completed: false }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: '14',
+                title: 'Día 14: Coruña → Madrid',
+                location: 'Madrid',
+                date: '13 de octubre (martes)',
+                categories: [
+                    {
+                        id: 'activities-14',
+                        name: 'Actividades en Arteixo',
+                        icon: '🎭',
+                        tasks: []
+                    },
+                    {
+                        id: 'transport-14',
+                        name: 'Transporte',
+                        icon: '✈️',
+                        tasks: [
+                            { id: '47', title: 'Traslado Arteixo → Aeropuerto', details: '', completed: false },
+                            { id: '48', title: 'Vuelo Coruña → Madrid', details: 'Flight Ticket(s) Issued (SOSAARDILES/JUAN AGUSTIN Madrid - La Coruna Round-trip 1132549284722750)\n\n✈️ INFORMACIÓN DEL VUELO:\n🚂 Vuelo: UX7238 | Boeing 737 | Economy class\n📅 Salida: 21:05, Tue, Oct 13, 2026, A Coruna Airport\n📅 Llegada: 22:15, Tue, Oct 13, 2026, Madrid Barajas Airport T2\n⏱️ Duración del vuelo: 1 h 10 m\n\n⚠️ IMPORTANTE:\n✓ Embarque: 60 minutos antes de la salida\n✓ Llevar documentación y pasaporte', completed: false }
+                        ]
+                    },
+                    {
+                        id: 'hotel-14',
+                        name: 'Alojamiento',
+                        icon: '🏨',
+                        tasks: [
+                            { id: '49', title: 'Alojamiento en Madrid', details: 'Pendiente de reservar con la empresa, ya que lo paga INDITEX', completed: false }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: '15',
+                title: 'Día 15: Madrid - Vuelta Agustin',
+                location: 'Madrid',
+                date: '14 de octubre (miércoles)',
+                categories: [
+                    {
+                        id: 'activities-15',
+                        name: 'Actividades',
+                        icon: '🎭',
+                        tasks: [
+                            { id: '48', title: 'Último día en Madrid', details: '', completed: false }
+                        ]
+                    },
+                    {
+                        id: 'transport-15',
+                        name: 'Transporte',
+                        icon: '✈️',
+                        tasks: [
+                            { id: '49', title: 'Traslado hotel → Aeropuerto', details: '', completed: false },
+                            { id: '50', title: 'Vuelo Madrid → Shanghai', details: 'Flight Ticket(s) Issued (SOSAARDILES/JUAN AGUSTIN Shanghai - Madrid Round-trip 1132548479239550)\n\n✈️ TRAMO 1: Madrid → Beijing\n🚂 Vuelo: CA908 | Boeing 787 | Economy class\n📅 Salida: 12:55, Wed, Oct 14, 2026, Madrid Barajas Airport T1\n📅 Llegada: 06:00, Thu, Oct 15, 2026, Beijing Capital International Airport T3\n⏱️ Duración del vuelo: 11 h 5 m\n\n🔄 CONEXIÓN EN BEIJING\n⏰ Escala: 1 hr 40 min\n\n✈️ TRAMO 2: Beijing → Shanghai\n🚂 Vuelo: CA8357 | Airbus 330 | Economy class\n📅 Salida: 07:40, Thu, Oct 15, 2026, Beijing Capital International Airport T3\n📅 Llegada: 09:55, Thu, Oct 15, 2026, Shanghai Pudong International Airport T2\n⏱️ Duración del vuelo: 2 h 15 m\n\n⚠️ IMPORTANTE:\n✓ Embarque: 60 minutos antes de la salida\n✓ Llevar documentación y pasaporte', completed: false }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: '16',
+                title: 'Día 16: Llegada a Shanghai',
+                location: 'Shanghai',
+                date: '15 de octubre (jueves)',
+                categories: [
+                    {
+                        id: 'transport-16',
+                        name: 'Transporte',
+                        icon: '✈️',
+                        tasks: [
+                            { id: '51', title: 'Vuelo en progreso hacia Shanghai', details: '', completed: false }
+                        ]
+                    },
+                    {
+                        id: 'notes-16',
+                        name: 'Notas',
+                        icon: '📝',
+                        tasks: [
+                            { id: '52', title: 'Llegada a Shanghai', details: '', completed: false }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        let state = {
+            expandedDay: null,
+            expandedCategories: {}
+        };
+
+        function saveState() {
+            localStorage.setItem('viaje-agenda-state', JSON.stringify(state));
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('viaje-agenda-state');
+            if (saved) state = JSON.parse(saved);
+        }
+
+        function updateStats() {
+            let total = 0, completed = 0;
+            data.forEach(day => {
+                day.categories.forEach(cat => {
+                    cat.tasks.forEach(task => {
+                        total++;
+                        if (task.completed) completed++;
+                    });
+                });
+            });
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-completed').textContent = completed;
+            document.getElementById('stat-progress').textContent = Math.round((completed / total) * 100) + '%';
+        }
+
+        function toggleDay(dayId) {
+            state.expandedDay = state.expandedDay === dayId ? null : dayId;
+            saveState();
+            render();
+        }
+
+        function toggleCategory(catKey) {
+            state.expandedCategories[catKey] = !state.expandedCategories[catKey];
+            saveState();
+            render();
+        }
+
+        function updateTask(dayId, catId, taskId, field, value) {
+            const day = data.find(d => d.id === dayId);
+            const cat = day.categories.find(c => c.id === catId);
+            const task = cat.tasks.find(t => t.id === taskId);
+            task[field] = value;
+            saveState();
+            updateStats();
+        }
+
+        function toggleTask(dayId, catId, taskId) {
+            const day = data.find(d => d.id === dayId);
+            const cat = day.categories.find(c => c.id === catId);
+            const task = cat.tasks.find(t => t.id === taskId);
+            task.completed = !task.completed;
+            saveState();
+            updateStats();
+        }
+
+        function deleteTask(dayId, catId, taskId) {
+            const day = data.find(d => d.id === dayId);
+            const cat = day.categories.find(c => c.id === catId);
+            cat.tasks = cat.tasks.filter(t => t.id !== taskId);
+            saveState();
+            updateStats();
+            render();
+        }
+
+        function render() {
+            const container = document.getElementById('days-container');
+            container.innerHTML = '';
+
+            data.forEach(day => {
+                const dayCard = document.createElement('div');
+                dayCard.className = 'day-card' + (state.expandedDay === day.id ? ' expanded' : '');
+
+                const header = document.createElement('div');
+                header.className = 'day-header';
+                header.onclick = () => toggleDay(day.id);
+
+                const dayInfo = document.createElement('div');
+                dayInfo.className = 'day-info';
+                dayInfo.innerHTML = `
+                    <div class="day-title">${day.title}</div>
+                    <div class="day-dates">${day.date} • ${day.location}</div>
+                `;
+
+                const progress = calculateDayProgress(day);
+                const progressDiv = document.createElement('div');
+                progressDiv.className = 'day-progress';
+                progressDiv.innerHTML = `
+                    <div class="progress-bar"><div class="progress-fill" style="width: ${progress}%"></div></div>
+                    <span style="font-size: 12px; color: #999;">${progress}%</span>
+                    <div class="chevron">▼</div>
+                `;
+
+                header.appendChild(dayInfo);
+                header.appendChild(progressDiv);
+                dayCard.appendChild(header);
+
+                if (state.expandedDay === day.id) {
+                    const content = document.createElement('div');
+                    content.className = 'day-content';
+
+                    day.categories.forEach(cat => {
+                        const catDiv = document.createElement('div');
+                        catDiv.className = 'category' + (state.expandedCategories[`${day.id}-${cat.id}`] ? ' expanded' : '');
+
+                        const catHeader = document.createElement('div');
+                        catHeader.className = 'category-header';
+                        catHeader.onclick = () => toggleCategory(`${day.id}-${cat.id}`);
+
+                        const completed = cat.tasks.filter(t => t.completed).length;
+                        catHeader.innerHTML = `
+                            <div class="category-title">
+                                <span class="category-icon">${cat.icon}</span>
+                                <span class="category-name">${cat.name}</span>
+                            </div>
+                            <span class="category-count">${completed}/${cat.tasks.length}</span>
+                        `;
+
+                        catDiv.appendChild(catHeader);
+
+                        if (state.expandedCategories[`${day.id}-${cat.id}`]) {
+                            const taskList = document.createElement('div');
+                            taskList.className = 'task-list';
+
+                            cat.tasks.forEach(task => {
+                                const taskDiv = document.createElement('div');
+                                taskDiv.className = 'task-item';
+                                taskDiv.innerHTML = `
+                                    <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${day.id}', '${cat.id}', '${task.id}')">
+                                    <div class="task-content">
+                                        <input type="text" class="${task.completed ? 'completed' : ''}" value="${task.title}" onchange="updateTask('${day.id}', '${cat.id}', '${task.id}', 'title', this.value)">
+                                        ${task.details ? `<textarea onchange="updateTask('${day.id}', '${cat.id}', '${task.id}', 'details', this.value)">${task.details}</textarea>` : ''}
+                                    </div>
+                                    <div class="task-actions">
+                                        <button class="btn-delete" onclick="deleteTask('${day.id}', '${cat.id}', '${task.id}')">✕</button>
+                                    </div>
+                                `;
+                                taskList.appendChild(taskDiv);
+                            });
+
+                            catDiv.appendChild(taskList);
+                        }
+
+                        content.appendChild(catDiv);
+                    });
+
+                    dayCard.appendChild(content);
+                }
+
+                container.appendChild(dayCard);
+            });
+        }
+
+        function calculateDayProgress(day) {
+            let total = 0, completed = 0;
+            day.categories.forEach(cat => {
+                cat.tasks.forEach(task => {
+                    total++;
+                    if (task.completed) completed++;
+                });
+            });
+            return total > 0 ? Math.round((completed / total) * 100) : 0;
+        }
+
+        loadState();
+        updateStats();
+        render();
+    </script>
+</body>
+</html>
