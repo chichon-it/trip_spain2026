@@ -839,16 +839,42 @@
 
         let state = {
             expandedDay: null,
-            expandedCategories: {}
+            expandedCategories: {},
+            taskCompletionStatus: {}
         };
 
         function saveState() {
+            // Guardar estado de expansión y checkboxes
+            state.taskCompletionStatus = {};
+            data.forEach(day => {
+                day.categories.forEach(cat => {
+                    cat.tasks.forEach(task => {
+                        const key = `${day.id}-${cat.id}-${task.id}`;
+                        state.taskCompletionStatus[key] = task.completed;
+                    });
+                });
+            });
             localStorage.setItem('viaje-agenda-state', JSON.stringify(state));
         }
 
         function loadState() {
             const saved = localStorage.getItem('viaje-agenda-state');
-            if (saved) state = JSON.parse(saved);
+            if (saved) {
+                state = JSON.parse(saved);
+                // Restaurar estado de checkboxes
+                if (state.taskCompletionStatus) {
+                    data.forEach(day => {
+                        day.categories.forEach(cat => {
+                            cat.tasks.forEach(task => {
+                                const key = `${day.id}-${cat.id}-${task.id}`;
+                                if (state.taskCompletionStatus[key] !== undefined) {
+                                    task.completed = state.taskCompletionStatus[key];
+                                }
+                            });
+                        });
+                    });
+                }
+            }
         }
 
         function updateStats() {
